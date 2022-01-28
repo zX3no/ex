@@ -2,26 +2,28 @@ use crate::sector_reader::SectorReader;
 use ntfs::{indexes::*, structured_values::*, *};
 use std::{fs::File, io::BufReader};
 
-pub struct Helper<'a> {
+pub struct Helper<'n> {
     fs: BufReader<SectorReader<File>>,
-    ntfs: &'a Ntfs,
-    current_dir: NtfsFile<'a>,
+    ntfs: &'n Ntfs,
+    current_dir: Vec<NtfsFile<'n>>,
+    dir_string: String,
 }
-impl<'a> Helper<'a> {
-    pub fn new(
-        fs: BufReader<SectorReader<File>>,
-        ntfs: &'a Ntfs,
-        current_dir: NtfsFile<'a>,
-    ) -> Self {
+impl<'n> Helper<'n> {
+    pub fn new(ntfs: &'n mut Ntfs, fs: BufReader<SectorReader<File>>) -> Self {
         Self {
             fs,
             ntfs,
-            current_dir,
+            current_dir: Vec::new(),
+            dir_string: String::new(),
         }
     }
     pub fn ls(&mut self) {
-        let file = &mut self.current_dir;
-        let index = file.directory_index(&mut self.fs).unwrap();
+        let index = self
+            .current_dir
+            .last()
+            .unwrap()
+            .directory_index(&mut self.fs)
+            .unwrap();
         let mut iter = index.entries();
 
         while let Some(entry) = iter.next(&mut self.fs) {
@@ -43,12 +45,30 @@ impl<'a> Helper<'a> {
     pub fn cd(&mut self, name: &str) {
         let fs = &mut self.fs;
 
+        if self.current_dir.is_empty() {
+            // let file = self.ntfs.root_directory(fs).unwrap();
+            // self.current_dir.push(file);
+        }
+
         if name == ".." {
-            todo!();
+            if self.dir_string.is_empty() {
+                return;
+            }
+
+            self.current_dir.pop();
+
+            let new_len = self.dir_string.rfind('\\').unwrap_or(0);
+            self.dir_string.truncate(new_len);
         } else {
-            let index = self.current_dir.directory_index(fs).unwrap();
+            let index = self
+                .current_dir
+                .last()
+                .unwrap()
+                .directory_index(fs)
+                .unwrap();
+
             let mut finder = index.finder();
-            let maybe_entry = NtfsFileNameIndex::find(&mut finder, self.ntfs, fs, name);
+            let maybe_entry = NtfsFileNameIndex::find(&mut finder, &self.ntfs, fs, name);
 
             if maybe_entry.is_none() {
                 println!("Cannot find subdirectory \"{}\".", name);
@@ -66,12 +86,17 @@ impl<'a> Helper<'a> {
                 return;
             }
 
-            let file = entry.to_file(self.ntfs, fs).unwrap();
-            // let file_name = self
-            //     .best_file_name(&file, self.current_dir.file_record_number())
-            //     .unwrap();
+            let file = entry.to_file(&self.ntfs, fs).unwrap();
+            let file_name = self
+                .best_file_name(&file, self.current_dir.last().unwrap().file_record_number())
+                .unwrap();
 
-            self.current_dir = file;
+            if !self.dir_string.is_empty() {
+                self.dir_string += "\\";
+            }
+            self.dir_string += &file_name.name().to_string_lossy();
+
+            self.current_dir.push(file);
         }
     }
 
