@@ -1,9 +1,8 @@
 [package]
-name = "explorer"
-default-run = "explorer"
+name = "ex"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 eframe = "0.14.0"
-ntfs = "0.1.0"
+jwalk = "0.6.0"
