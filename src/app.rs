@@ -1,11 +1,7 @@
-use eframe::egui::*;
-use eframe::epi;
+use eframe::{egui::*, epi};
 use jwalk::WalkDir;
-use std::env;
-use std::io;
-use std::os::windows::prelude::MetadataExt;
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::{env, io, os::windows::prelude::MetadataExt};
 
 pub struct App {
     files: Vec<PathBuf>,
@@ -49,6 +45,7 @@ impl App {
         }
         Ok(())
     }
+
     pub fn sort(&mut self) {
         // self.files.sort_by_key(|a| a.starts_with("."));
         // self.files
@@ -82,6 +79,8 @@ impl epi::App for App {
             });
         });
 
+        //TODO: right click menu
+
         CentralPanel::default().show(ctx, |ui| {
             warn_if_debug_build(ui);
             let row_height = ui.fonts()[TextStyle::Body].row_height();
@@ -99,18 +98,22 @@ impl epi::App for App {
                                 if columns[0].button(format!("../{name}")).clicked() {
                                     self.previous_dir().unwrap();
                                 }
-                            } else if columns[0].button(name).clicked() && file.is_dir() {
-                                self.set_directory(file.as_path()).unwrap();
+                            } else if columns[0].button(&name).clicked() {
+                                if file.is_dir() {
+                                    self.set_directory(file.as_path()).unwrap();
+                                } else {
+                                    open::that(file.as_path()).unwrap();
+                                }
                             }
 
                             if let Ok(metadata) = file.metadata() {
                                 let size = metadata.file_size();
-                                let size_str = if size / 1000 < 1 {
+                                let size_str = if size < 1000 {
                                     format!("{} bytes", size)
-                                } else if size / 10000 < 1 {
+                                } else if size < 1_000_000 {
                                     format!("{} kilobytes", size / 1000)
                                 } else {
-                                    format!("{} megabytes", size / 10000)
+                                    format!("{} megabytes", size / 1_000_000)
                                 };
 
                                 if file.is_dir() {
