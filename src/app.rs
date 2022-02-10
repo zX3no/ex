@@ -29,12 +29,13 @@ impl App {
             .into_iter()
             .flat_map(|entry| {
                 if let Ok(entry) = entry {
-                    let path = entry.path();
-                    if path != dir {
-                        Some(path)
-                    } else {
-                        None
-                    }
+                    Some(entry.path())
+                    // let path = entry.path();
+                    // if path != dir {
+                    //     Some(path)
+                    // } else {
+                    //     None
+                    // }
                 } else {
                     None
                 }
@@ -46,12 +47,21 @@ impl App {
 
         Ok(())
     }
+    pub fn previous_dir(&mut self) -> io::Result<()> {
+        if let Some(dir) = env::current_dir()?.parent() {
+            self.set_directory(dir)?
+        }
+        Ok(())
+    }
     pub fn sort(&mut self) {
+        //hidden files are sorted normally
+
         //Sort files into:
         //dot files
         //directorys
         //files
         //sort each category alphabetically
+        self.files.sort_by_key(|a| !a.is_dir())
     }
 }
 
@@ -86,31 +96,34 @@ impl epi::App for App {
             let files = self.files.clone();
             let num_rows = files.len();
 
-            //TODO: print first file as ../current_dir
             ScrollArea::auto_sized().show_rows(ui, row_height, num_rows, |ui, row_range| {
                 for row in row_range {
                     let file = files.get(row).unwrap();
-                    ui.columns(2, |columns| {
-                        if columns[0]
-                            .button(file.file_name().unwrap().to_string_lossy())
-                            .clicked()
-                            && file.is_dir()
-                        {
-                            self.set_directory(file.as_path()).unwrap();
-                        };
-                        let size = file.metadata().unwrap().file_size();
-                        let size_str = if size / 1000 < 1 {
-                            format!("{} bytes", size)
-                        } else if size / 10000 < 1 {
-                            format!("{} kilobytes", size / 1000)
-                        } else {
-                            format!("{} megabytes", size / 10000)
-                        };
+                    if let Some(name) = file.file_name() {
+                        let name = name.to_string_lossy();
 
-                        if columns[1].button(size_str).clicked() {
-                            //clicked
-                        }
-                    });
+                        ui.columns(2, |columns| {
+                            if row == 0 {
+                                if columns[0].button(format!("../{name}")).clicked() {
+                                    self.previous_dir().unwrap();
+                                }
+                            } else if columns[0].button(name).clicked() && file.is_dir() {
+                                self.set_directory(file.as_path()).unwrap();
+                            }
+
+                            if let Ok(metadata) = file.metadata() {
+                                let size = metadata.file_size();
+                                let size_str = if size / 1000 < 1 {
+                                    format!("{} bytes", size)
+                                } else if size / 10000 < 1 {
+                                    format!("{} kilobytes", size / 1000)
+                                } else {
+                                    format!("{} megabytes", size / 10000)
+                                };
+                                columns[1].label(&size_str);
+                            }
+                        });
+                    }
                 }
             });
         });
