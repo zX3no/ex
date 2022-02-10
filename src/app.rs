@@ -26,16 +26,11 @@ impl App {
         let dir = env::current_dir()?;
         let files: Vec<_> = WalkDir::new(&dir)
             .max_depth(1)
+            .skip_hidden(false)
             .into_iter()
             .flat_map(|entry| {
                 if let Ok(entry) = entry {
                     Some(entry.path())
-                    // let path = entry.path();
-                    // if path != dir {
-                    //     Some(path)
-                    // } else {
-                    //     None
-                    // }
                 } else {
                     None
                 }
@@ -47,6 +42,7 @@ impl App {
 
         Ok(())
     }
+
     pub fn previous_dir(&mut self) -> io::Result<()> {
         if let Some(dir) = env::current_dir()?.parent() {
             self.set_directory(dir)?
@@ -54,14 +50,10 @@ impl App {
         Ok(())
     }
     pub fn sort(&mut self) {
-        //hidden files are sorted normally
-
-        //Sort files into:
-        //dot files
-        //directorys
-        //files
-        //sort each category alphabetically
-        self.files.sort_by_key(|a| !a.is_dir())
+        // self.files.sort_by_key(|a| a.starts_with("."));
+        // self.files
+        //     .sort_by_key(|a| a.to_string_lossy().to_lowercase());
+        self.files.sort_by_key(|a| !a.is_dir());
     }
 }
 
@@ -120,7 +112,12 @@ impl epi::App for App {
                                 } else {
                                     format!("{} megabytes", size / 10000)
                                 };
-                                columns[1].label(&size_str);
+
+                                if file.is_dir() {
+                                    columns[1].label("");
+                                } else {
+                                    columns[1].label(&size_str);
+                                }
                             }
                         });
                     }
