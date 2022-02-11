@@ -5,11 +5,15 @@ use std::{env, io, os::windows::prelude::MetadataExt};
 
 pub struct App {
     files: Vec<PathBuf>,
+    dropped_files: Vec<DroppedFile>,
 }
 
 impl App {
     pub fn new() -> Self {
-        Self { files: Vec::new() }
+        Self {
+            files: Vec::new(),
+            dropped_files: Vec::new(),
+        }
     }
 
     pub fn set_directory(&mut self, path: &Path) -> io::Result<()> {
@@ -52,6 +56,40 @@ impl App {
         //     .sort_by_key(|a| a.to_string_lossy().to_lowercase());
         self.files.sort_by_key(|a| !a.is_dir());
     }
+
+    fn detect_files_being_dropped(&mut self, ctx: &CtxRef) {
+        // Preview hovering files:
+        if !ctx.input().raw.hovered_files.is_empty() {
+            let mut text = "Dropping files:\n".to_owned();
+            for file in &ctx.input().raw.hovered_files {
+                if let Some(path) = &file.path {
+                    text += &format!("\n{}", path.display());
+                } else if !file.mime.is_empty() {
+                    text += &format!("\n{}", file.mime);
+                } else {
+                    text += "\n???";
+                }
+            }
+
+            let painter =
+                ctx.layer_painter(LayerId::new(Order::Foreground, Id::new("file_drop_target")));
+
+            let screen_rect = ctx.input().screen_rect();
+            painter.rect_filled(screen_rect, 0.0, Color32::from_black_alpha(192));
+            painter.text(
+                screen_rect.center(),
+                Align2::CENTER_CENTER,
+                text,
+                TextStyle::Heading,
+                Color32::WHITE,
+            );
+        }
+
+        // Collect dropped files:
+        if !ctx.input().raw.dropped_files.is_empty() {
+            self.dropped_files = ctx.input().raw.dropped_files.clone();
+        }
+    }
 }
 
 impl epi::App for App {
@@ -83,6 +121,29 @@ impl epi::App for App {
 
         CentralPanel::default().show(ctx, |ui| {
             warn_if_debug_build(ui);
+
+            if !self.dropped_files.is_empty() {
+                ui.group(|ui| {
+                    ui.label("Dropped files:");
+
+                    for file in &self.dropped_files {
+                        let mut info = if let Some(path) = &file.path {
+                            path.display().to_string()
+                        } else if !file.name.is_empty() {
+                            file.name.clone()
+                        } else {
+                            "???".to_owned()
+                        };
+                        if let Some(bytes) = &file.bytes {
+                            info += &format!(" ({} bytes)", bytes.len());
+                        }
+                        ui.label(info);
+                    }
+                });
+            }
+
+            self.detect_files_being_dropped(ctx);
+
             let row_height = ui.fonts()[TextStyle::Body].row_height();
             let files = self.files.clone();
             let num_rows = files.len();
