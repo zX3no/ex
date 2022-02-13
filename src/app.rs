@@ -1,7 +1,8 @@
 use eframe::{egui::*, epi};
 use jwalk::WalkDir;
+use std::os::windows::prelude::MetadataExt;
 use std::path::{Path, PathBuf};
-use std::{env, io, os::windows::prelude::MetadataExt};
+use std::{env, io};
 
 pub struct App {
     files: Vec<PathBuf>,
@@ -97,19 +98,14 @@ impl epi::App for App {
         "Explorer"
     }
 
-    fn setup(
-        &mut self,
-        _ctx: &CtxRef,
-        _frame: &mut epi::Frame<'_>,
-        _storage: Option<&dyn epi::Storage>,
-    ) {
+    fn setup(&mut self, _ctx: &CtxRef, _frame: &epi::Frame, _storage: Option<&dyn epi::Storage>) {
         self.updates_files().unwrap();
     }
 
-    fn update(&mut self, ctx: &CtxRef, frame: &mut epi::Frame<'_>) {
+    fn update(&mut self, ctx: &CtxRef, frame: &epi::Frame) {
         TopBottomPanel::top("top_panel").show(ctx, |ui| {
             menu::bar(ui, |ui| {
-                menu::menu(ui, "File", |ui| {
+                menu::menu_button(ui, "File", |ui| {
                     if ui.button("Quit").clicked() {
                         frame.quit();
                     }
@@ -117,42 +113,49 @@ impl epi::App for App {
             });
         });
 
-        //TODO: right click menu
-
         CentralPanel::default().show(ctx, |ui| {
             warn_if_debug_build(ui);
 
-            if !self.dropped_files.is_empty() {
-                ui.group(|ui| {
-                    ui.label("Dropped files:");
+            //Context menu
+            //TODO: Right click the central panel?
+            // let response = ui.label("Right-click me!");
+            // response.context_menu(|ui| {
+            //     if ui.button("Close the menu").clicked() {
+            //         ui.close_menu();
+            //     }
+            // });
 
-                    for file in &self.dropped_files {
-                        let mut info = if let Some(path) = &file.path {
-                            path.display().to_string()
-                        } else if !file.name.is_empty() {
-                            file.name.clone()
-                        } else {
-                            "???".to_owned()
-                        };
-                        if let Some(bytes) = &file.bytes {
-                            info += &format!(" ({} bytes)", bytes.len());
-                        }
-                        ui.label(info);
-                    }
-                });
-            }
+            // if !self.dropped_files.is_empty() {
+            //     ui.group(|ui| {
+            //         ui.label("Dropped files:");
 
-            self.detect_files_being_dropped(ctx);
+            //         for file in &self.dropped_files {
+            //             let mut info = if let Some(path) = &file.path {
+            //                 path.display().to_string()
+            //             } else if !file.name.is_empty() {
+            //                 file.name.clone()
+            //             } else {
+            //                 "???".to_owned()
+            //             };
+            //             if let Some(bytes) = &file.bytes {
+            //                 info += &format!(" ({} bytes)", bytes.len());
+            //             }
+            //             ui.label(info);
+            //         }
+            //     });
+            // }
+
+            // self.detect_files_being_dropped(ctx);
 
             let row_height = ui.fonts()[TextStyle::Body].row_height();
             let files = self.files.clone();
             let num_rows = files.len();
 
-            ScrollArea::auto_sized().show_rows(ui, row_height, num_rows, |ui, row_range| {
+            ScrollArea::vertical().show_rows(ui, row_height, num_rows, |ui, row_range| {
                 for row in row_range {
                     let file = files.get(row).unwrap();
                     if let Some(name) = file.file_name() {
-                        let name = name.to_string_lossy();
+                        let name = name.to_string_lossy().to_string();
 
                         ui.columns(2, |columns| {
                             if row == 0 {
