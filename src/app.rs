@@ -4,8 +4,16 @@ use std::os::windows::prelude::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::{env, io};
 
+#[derive(Default)]
+struct Rename {
+    pub path: PathBuf,
+    pub name: String,
+}
+
 pub struct App {
     files: Vec<PathBuf>,
+    copied_file: PathBuf,
+    renamed_file: Rename,
     dropped_files: Vec<DroppedFile>,
 }
 
@@ -13,6 +21,8 @@ impl App {
     pub fn new() -> Self {
         Self {
             files: Vec::new(),
+            copied_file: PathBuf::new(),
+            renamed_file: Rename::default(),
             dropped_files: Vec::new(),
         }
     }
@@ -116,15 +126,6 @@ impl epi::App for App {
         CentralPanel::default().show(ctx, |ui| {
             warn_if_debug_build(ui);
 
-            //Context menu
-            //TODO: Right click the central panel?
-            // let response = ui.label("Right-click me!");
-            // response.context_menu(|ui| {
-            //     if ui.button("Close the menu").clicked() {
-            //         ui.close_menu();
-            //     }
-            // });
-
             // if !self.dropped_files.is_empty() {
             //     ui.group(|ui| {
             //         ui.label("Dropped files:");
@@ -156,19 +157,47 @@ impl epi::App for App {
                     let file = files.get(row).unwrap();
                     if let Some(name) = file.file_name() {
                         let name = name.to_string_lossy().to_string();
+                        let pressed_enter = ui.input().key_pressed(Key::Enter);
 
                         ui.columns(2, |columns| {
-                            if row == 0 {
-                                if columns[0].button(format!("../{name}")).clicked() {
+                            let response = if row == 0 {
+                                columns[0].button(format!("../{name}"))
+                            } else if file == &self.renamed_file.path {
+                                let r =
+                                    columns[0].text_edit_singleline(&mut self.renamed_file.name);
+                                r.request_focus();
+                                r
+                            } else {
+                                columns[0].button(&name)
+                            };
+
+                            if response.clicked() {
+                                if file == &self.renamed_file.path {
+                                    if pressed_enter {
+                                        self.renamed_file = Rename::default();
+                                    }
+                                } else if row == 0 {
                                     self.previous_dir().unwrap();
-                                }
-                            } else if columns[0].button(&name).clicked() {
-                                if file.is_dir() {
+                                } else if file.is_dir() {
                                     self.set_directory(file.as_path()).unwrap();
                                 } else {
-                                    open::that(file.as_path()).unwrap();
+                                    // open::that(file.as_path()).unwrap();
                                 }
                             }
+
+                            response.context_menu(|ui| {
+                                if ui.button("Cut").clicked() {};
+                                if ui.button("Copy").clicked() {
+                                    self.copied_file = file.clone();
+                                };
+                                ui.separator();
+                                if ui.button("Rename").clicked() {
+                                    self.renamed_file.path = file.clone();
+                                    self.renamed_file.name = name.clone();
+                                };
+                                ui.separator();
+                                if ui.button("Delete").clicked() {};
+                            });
 
                             if let Ok(metadata) = file.metadata() {
                                 let size = metadata.file_size();
