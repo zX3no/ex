@@ -2,7 +2,7 @@ use eframe::{egui::*, epi};
 use jwalk::WalkDir;
 use std::os::windows::prelude::MetadataExt;
 use std::path::{Path, PathBuf};
-use std::{env, io};
+use std::{env, fs, io};
 
 #[derive(Default)]
 struct Rename {
@@ -163,6 +163,7 @@ impl epi::App for App {
                             let response = if row == 0 {
                                 columns[0].button(format!("../{name}"))
                             } else if file == &self.renamed_file.path {
+                                //TODO: pre select the file name
                                 let r =
                                     columns[0].text_edit_singleline(&mut self.renamed_file.name);
                                 r.request_focus();
@@ -174,29 +175,44 @@ impl epi::App for App {
                             if response.clicked() {
                                 if file == &self.renamed_file.path {
                                     if pressed_enter {
+                                        //rename
+                                        let old_path = self.renamed_file.path.clone();
+                                        let mut new_path = old_path.clone();
+                                        let name = &self.renamed_file.name;
+                                        new_path.set_file_name(name);
+                                        fs::rename(old_path, new_path).unwrap();
+
+                                        //reset and update
                                         self.renamed_file = Rename::default();
+                                        self.updates_files().unwrap();
                                     }
                                 } else if row == 0 {
                                     self.previous_dir().unwrap();
                                 } else if file.is_dir() {
                                     self.set_directory(file.as_path()).unwrap();
                                 } else {
-                                    // open::that(file.as_path()).unwrap();
+                                    open::that(file.as_path()).unwrap();
                                 }
                             }
 
                             response.context_menu(|ui| {
-                                if ui.button("Cut").clicked() {};
+                                if ui.button("Cut").clicked() {
+                                    ui.close_menu();
+                                };
                                 if ui.button("Copy").clicked() {
                                     self.copied_file = file.clone();
+                                    ui.close_menu();
                                 };
                                 ui.separator();
                                 if ui.button("Rename").clicked() {
                                     self.renamed_file.path = file.clone();
                                     self.renamed_file.name = name.clone();
+                                    ui.close_menu();
                                 };
                                 ui.separator();
-                                if ui.button("Delete").clicked() {};
+                                if ui.button("Delete").clicked() {
+                                    ui.close_menu();
+                                };
                             });
 
                             if let Ok(metadata) = file.metadata() {
