@@ -7,20 +7,16 @@ use std::{
 };
 
 #[derive(Default)]
-pub struct Ex {
-    show_drives: bool,
-}
+pub struct Ex {}
 
 impl Ex {
     pub fn set_directory(path: &Path) -> Result<()> {
         env::set_current_dir(path)
     }
 
-    pub fn previous_dir(&mut self) -> Result<()> {
+    pub fn previous_dir() -> Result<()> {
         if let Some(dir) = env::current_dir()?.parent() {
             Ex::set_directory(dir)?;
-        } else {
-            self.show_drives = true;
         }
         Ok(())
     }

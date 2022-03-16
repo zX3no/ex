@@ -12,7 +12,6 @@ pub struct App {
     files: Vec<PathBuf>,
     copied_file: PathBuf,
     renamed_file: Rename,
-    ex: Ex,
 }
 
 impl App {
@@ -21,7 +20,6 @@ impl App {
             files: Vec::new(),
             copied_file: PathBuf::new(),
             renamed_file: Rename::default(),
-            ex: Ex::default(),
         }
     }
 }
@@ -44,6 +42,25 @@ impl epi::App for App {
                     }
                 });
             });
+        });
+
+        #[allow(unused_must_use)]
+        SidePanel::left("side_panel").show(ctx, |ui| {
+            ui.button("Quick Access:");
+            ui.button("Downloads");
+            ui.button("Documents");
+            ui.separator();
+            if ui.button("Drives:").clicked() {
+                self.files = Ex::get_drives();
+            };
+            if ui.button("C:/").clicked() {
+                Ex::set_directory(&PathBuf::from("C://"));
+                self.files = Ex::get_files().unwrap();
+            };
+            if ui.button("D:/").clicked() {
+                Ex::set_directory(&PathBuf::from("D://"));
+                self.files = Ex::get_files().unwrap();
+            };
         });
 
         CentralPanel::default().show(ctx, |ui| {
@@ -93,7 +110,7 @@ impl epi::App for App {
                                         self.files = Ex::get_files().unwrap();
                                     }
                                 } else if row == 0 {
-                                    self.ex.previous_dir().unwrap();
+                                    Ex::previous_dir().unwrap();
                                     self.files = Ex::get_files().unwrap();
                                 } else if file.is_dir() {
                                     Ex::set_directory(file).unwrap();
