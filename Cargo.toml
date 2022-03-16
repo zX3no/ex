@@ -1,9 +1,2 @@
-[package]
-name = "ex"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-eframe = "0.16.0"
-jwalk = "0.6.0"
-open = "2.0.2"
+[workspace]
+members = ["ex", "ex-egui", "ex-term"]
