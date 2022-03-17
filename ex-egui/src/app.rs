@@ -96,7 +96,7 @@ impl epi::App for App {
                                 columns[0].button(&name)
                             };
 
-                            if response.clicked() {
+                            if response.double_clicked() {
                                 if file == &self.renamed_file.path {
                                     if pressed_enter || response.lost_focus() {
                                         Ex::rename(
@@ -148,10 +148,10 @@ impl epi::App for App {
                         ui.columns(2, |columns| {
                             let name = file.to_string_lossy();
                             if name == "C:\\" || name == "D:\\" {
-                                if columns[0].button("../").clicked() {
+                                if columns[0].button("../").double_clicked() {
                                     self.files = Ex::get_drives();
                                 }
-                            } else if columns[0].button(format!("{}", name)).clicked() {
+                            } else if columns[0].button(format!("{}", name)).double_clicked() {
                                 Ex::set_directory(file).unwrap();
                                 self.files = Ex::get_files().unwrap();
                             }

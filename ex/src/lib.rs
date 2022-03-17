@@ -21,6 +21,10 @@ impl Ex {
         Ok(())
     }
 
+    pub fn current_dir() -> Result<PathBuf> {
+        env::current_dir()
+    }
+
     pub fn get_files() -> Result<Vec<PathBuf>> {
         let dir = env::current_dir()?;
         let mut files: Vec<_> = WalkDir::new(&dir)
