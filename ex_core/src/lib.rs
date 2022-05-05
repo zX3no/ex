@@ -47,7 +47,7 @@ impl Ex {
         &self.current_dir
     }
 
-    pub fn get_files(&self) -> &Vec<PathBuf> {
+    pub fn get_files(&self) -> &[PathBuf] {
         &self.files
     }
 

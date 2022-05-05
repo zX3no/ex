@@ -8,3 +8,4 @@ default-run = "ex_egui"
 egui = "0.18.0"
 eframe = "0.18.0"
 ex_core = { path = "../ex_core" }
+egui_extras = "0.18.0"
