@@ -12,12 +12,6 @@ pub struct Ex {
 }
 
 impl Ex {
-    pub fn new() -> Self {
-        Self {
-            current_dir: PathBuf::from("C:/"),
-            files: vec![PathBuf::from("C:/"), PathBuf::from("D:/")],
-        }
-    }
     pub fn set_directory(&mut self, path: &Path) {
         self.current_dir = path.to_path_buf();
 
@@ -49,10 +43,6 @@ impl Ex {
 
     pub fn get_files(&self) -> &[PathBuf] {
         &self.files
-    }
-
-    pub fn set_drives(&mut self) {
-        self.files = vec![PathBuf::from("C:/"), PathBuf::from("D:/")]
     }
 
     //TODO: too slow on windows
@@ -107,5 +97,10 @@ impl Ex {
 
     pub fn create_dir(&self, path: &Path) -> Result<()> {
         fs::create_dir(path)
+    }
+
+    pub fn reset(&mut self) {
+        self.files = Vec::new();
+        self.current_dir = PathBuf::default()
     }
 }
