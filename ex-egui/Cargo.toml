@@ -1,9 +1,0 @@
-[package]
-name = "ex-egui"
-version = "0.1.0"
-edition = "2021"
-default-run = "ex-egui"
-
-[dependencies]
-eframe = "0.17.0"
-ex = { path = "../ex" }

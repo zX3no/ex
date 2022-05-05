@@ -1,39 +1,40 @@
-use eframe::{egui::*, epi};
-use ex::Ex;
-use std::path::PathBuf;
+use eframe::egui::*;
+use ex_core::Ex;
+use std::path::{Path, PathBuf};
 
 #[derive(Default)]
-struct Rename {
+pub struct Rename {
     pub path: PathBuf,
     pub name: String,
 }
 
 pub struct App {
-    files: Vec<PathBuf>,
+    ex: Ex,
     copied_file: PathBuf,
     renamed_file: Rename,
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        //dark mode
+        cc.egui_ctx.set_visuals(Visuals::dark());
+
         Self {
-            files: Vec::new(),
+            ex: Ex::new(),
             copied_file: PathBuf::new(),
             renamed_file: Rename::default(),
         }
     }
 }
 
-impl epi::App for App {
-    fn name(&self) -> &str {
-        "Explorer"
-    }
+impl eframe::App for App {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        let Self {
+            ex,
+            copied_file: _,
+            renamed_file: _,
+        } = self;
 
-    fn setup(&mut self, _ctx: &Context, _frame: &epi::Frame, _storage: Option<&dyn epi::Storage>) {
-        self.files = Ex::get_files().unwrap();
-    }
-
-    fn update(&mut self, ctx: &Context, frame: &epi::Frame) {
         TopBottomPanel::top("top_panel").show(ctx, |ui| {
             menu::bar(ui, |ui| {
                 menu::menu_button(ui, "File", |ui| {
@@ -44,22 +45,29 @@ impl epi::App for App {
             });
         });
 
-        #[allow(unused_must_use)]
         SidePanel::left("side_panel").show(ctx, |ui| {
-            ui.button("Quick Access:");
-            ui.button("Downloads");
-            ui.button("Documents");
+            if ui.button("Quick Access:").clicked() {
+                //todo
+            }
+            if ui.button("Desktop").clicked() {
+                ex.set_directory(Path::new("C:/Users/Bay/Desktop"));
+                //todo
+            }
+            if ui.button("Downloads").clicked() {
+                //todo
+            }
+            if ui.button("Documents").clicked() {
+                //todo
+            }
             ui.separator();
             if ui.button("Drives:").clicked() {
-                self.files = Ex::get_drives();
+                ex.set_drives();
             };
             if ui.button("C:/").clicked() {
-                Ex::set_directory(&PathBuf::from("C://"));
-                self.files = Ex::get_files().unwrap();
+                ex.set_directory(&PathBuf::from("C:/"));
             };
             if ui.button("D:/").clicked() {
-                Ex::set_directory(&PathBuf::from("D://"));
-                self.files = Ex::get_files().unwrap();
+                ex.set_directory(&PathBuf::from("D:/"));
             };
         });
 
@@ -68,7 +76,7 @@ impl epi::App for App {
 
             let text_style = TextStyle::Body;
             let row_height = ui.text_style_height(&text_style);
-            let files = self.files.clone();
+            let files = ex.get_files().clone();
             let num_rows = files.len();
 
             ScrollArea::vertical().show_rows(ui, row_height, num_rows, |ui, row_range| {
@@ -96,28 +104,24 @@ impl epi::App for App {
                                 columns[0].button(&name)
                             };
 
-                            if response.double_clicked() {
+                            if response.clicked() {
                                 if file == &self.renamed_file.path {
                                     if pressed_enter || response.lost_focus() {
-                                        Ex::rename(
-                                            &self.renamed_file.name,
-                                            &self.renamed_file.path,
-                                        )
-                                        .unwrap();
+                                        ex.rename(&self.renamed_file.name, &self.renamed_file.path)
+                                            .unwrap();
 
                                         //reset and update
                                         self.renamed_file = Rename::default();
-                                        self.files = Ex::get_files().unwrap();
                                     }
                                 } else if row == 0 {
-                                    Ex::previous_dir().unwrap();
-                                    self.files = Ex::get_files().unwrap();
+                                    ex.previous_dir().unwrap();
                                 } else if file.is_dir() {
-                                    Ex::set_directory(file).unwrap();
-                                    self.files = Ex::get_files().unwrap();
-                                } else {
-                                    Ex::open(file).unwrap();
+                                    ex.set_directory(file);
                                 }
+                            }
+
+                            if response.double_clicked() && row != 0 && !file.is_dir() {
+                                ex.open(file).unwrap();
                             }
 
                             response.context_menu(|ui| {
@@ -140,20 +144,22 @@ impl epi::App for App {
                                 };
                             });
 
-                            if let Some(size) = Ex::file_size(file) {
-                                columns[1].label(size);
-                            }
+                            // if let Some(size) = ex.file_size(file) {
+                            //     columns[1].label(size);
+                            // }
                         });
                     } else {
                         ui.columns(2, |columns| {
                             let name = file.to_string_lossy();
-                            if name == "C:\\" || name == "D:\\" {
-                                if columns[0].button("../").double_clicked() {
-                                    self.files = Ex::get_drives();
+                            if ex.get_files().len() > 2 {
+                                if columns[0].button("../").clicked() {
+                                    ex.set_drives();
                                 }
-                            } else if columns[0].button(format!("{}", name)).double_clicked() {
-                                Ex::set_directory(file).unwrap();
-                                self.files = Ex::get_files().unwrap();
+                            } else {
+                                //
+                                if columns[0].button(format!("{}", name)).clicked() {
+                                    ex.set_directory(file);
+                                }
                             }
                         });
                     }

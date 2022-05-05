@@ -1,2 +1,2 @@
 [workspace]
-members = ["ex", "ex-egui", "ex-term"]
+members = ["ex_core", "ex_egui"]
