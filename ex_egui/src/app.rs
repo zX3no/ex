@@ -51,29 +51,32 @@ impl eframe::App for App {
         });
 
         SidePanel::left("side_panel").show(ctx, |ui| {
-            if ui.button("Quick Access:").clicked() {
-                //todo
-            }
-            if ui.button("Desktop").clicked() {
-                ex.set_directory(Path::new("C:\\Users\\Bay\\Desktop"));
-                //todo
-            }
-            if ui.button("Downloads").clicked() {
-                //todo
-            }
-            if ui.button("Documents").clicked() {
-                //todo
-            }
-            ui.separator();
-            if ui.button("Drives:").clicked() {
-                ex.reset();
-            };
-            if ui.button("C:\\").clicked() {
-                ex.set_directory(&PathBuf::from("C:\\"));
-            };
-            if ui.button("D:\\").clicked() {
-                ex.set_directory(&PathBuf::from("D:\\"));
-            };
+            ui.style_mut().visuals.button_frame = false;
+
+            CollapsingHeader::new("Quick Access")
+                .default_open(true)
+                .show(ui, |ui| {
+                    if ui.button("Desktop").clicked() {
+                        ex.set_directory(Path::new("C:\\Users\\Bay\\Desktop"));
+                    }
+                    if ui.button("Downloads").clicked() {
+                        ex.set_directory(Path::new("C:\\Users\\Bay\\Downloads"));
+                    }
+                    if ui.button("Music").clicked() {
+                        ex.set_directory(Path::new("D:\\Music"));
+                    }
+                });
+
+            CollapsingHeader::new("Drives")
+                .default_open(true)
+                .show(ui, |ui| {
+                    if ui.button("C:\\").clicked() {
+                        ex.set_directory(&PathBuf::from("C:\\"));
+                    };
+                    if ui.button("D:\\").clicked() {
+                        ex.set_directory(&PathBuf::from("D:\\"));
+                    };
+                });
         });
 
         CentralPanel::default().show(ctx, |ui| {
@@ -83,6 +86,7 @@ impl eframe::App for App {
             ui.style_mut().visuals.button_frame = false;
 
             let mut files = ex.get_files().to_owned();
+
             //the first directory is the selected one
             let current_dir = if !files.is_empty() {
                 files.remove(0)
@@ -120,7 +124,7 @@ impl eframe::App for App {
 
                 TableBuilder::new(ui)
                     .striped(true)
-                    .column(Size::remainder().at_least(280.0))
+                    .column(Size::remainder().at_least(200.0))
                     .column(Size::remainder().at_least(20.0))
                     .column(Size::remainder().at_least(20.0))
                     .column(Size::remainder().at_least(20.0))
@@ -201,7 +205,11 @@ impl eframe::App for App {
                             }
                             row.col(|_| {});
                             row.col(|_| {});
-                            row.col(|_| {});
+                            row.col(|ui| {
+                                if let Some(size) = ex.file_size(&file) {
+                                    ui.label(size);
+                                }
+                            });
                         });
                     });
             } else {

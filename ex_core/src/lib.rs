@@ -2,19 +2,17 @@ use jwalk::WalkDir;
 use std::{
     env, fs,
     io::Result,
+    os::windows::prelude::MetadataExt,
     path::{Path, PathBuf},
 };
 
 #[derive(Default)]
 pub struct Ex {
-    // current_dir: PathBuf,
     files: Vec<PathBuf>,
 }
 
 impl Ex {
     pub fn set_directory(&mut self, path: &Path) {
-        // self.current_dir = path.to_path_buf();
-
         if env::set_current_dir(path).is_ok() {
             let mut files: Vec<PathBuf> = WalkDir::new(&path)
                 .max_depth(1)
@@ -42,34 +40,34 @@ impl Ex {
     }
 
     //TODO: too slow on windows
-    // pub fn file_size(&self, path: &Path) -> Option<String> {
-    //     if let Ok(metadata) = path.metadata() {
-    //         let size = metadata.file_size();
-    //         #[allow(clippy::if_same_then_else)]
-    //         let size_str = if size < 1_000 {
-    //             if size == 0 {
-    //                 String::from("0 KB")
-    //             } else {
-    //                 String::from("1 KB")
-    //             }
-    //             // String::from("< 1 KB")
-    //             // format!("{} B", size)
-    //         } else if size < 1_000_000 {
-    //             format!("{} KB", size / 1_000)
-    //         } else {
-    //             format!("{} KB", size / 1_000)
-    //             // format!("{:.2} megabytes", size as f64 / 1_000_000.0)
-    //         };
+    pub fn file_size(&self, path: &Path) -> Option<String> {
+        if let Ok(metadata) = path.metadata() {
+            let size = metadata.file_size();
+            #[allow(clippy::if_same_then_else)]
+            let size_str = if size < 1_000 {
+                if size == 0 {
+                    String::from("0 KB")
+                } else {
+                    String::from("1 KB")
+                }
+                // String::from("< 1 KB")
+                // format!("{} B", size)
+            } else if size < 1_000_000 {
+                format!("{} KB", size / 1_000)
+            } else {
+                // format!("{} KB", size / 1_000)
+                format!("{} MB", size / 1_000_000)
+            };
 
-    //         if path.is_dir() {
-    //             Some(String::from(""))
-    //         } else {
-    //             Some(size_str)
-    //         }
-    //     } else {
-    //         None
-    //     }
-    // }
+            if path.is_dir() {
+                Some(String::from(""))
+            } else {
+                Some(size_str)
+            }
+        } else {
+            None
+        }
+    }
 
     pub fn open(&self, path: &Path) -> Result<()> {
         open::that(path)
