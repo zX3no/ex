@@ -7,13 +7,13 @@ use std::{
 
 #[derive(Default)]
 pub struct Ex {
-    current_dir: PathBuf,
+    // current_dir: PathBuf,
     files: Vec<PathBuf>,
 }
 
 impl Ex {
     pub fn set_directory(&mut self, path: &Path) {
-        self.current_dir = path.to_path_buf();
+        // self.current_dir = path.to_path_buf();
 
         if env::set_current_dir(path).is_ok() {
             let mut files: Vec<PathBuf> = WalkDir::new(&path)
@@ -29,16 +29,12 @@ impl Ex {
         };
     }
 
-    #[allow(mutable_borrow_reservation_conflict, clippy::unnecessary_to_owned)]
-    pub fn previous_dir(&mut self) -> Result<()> {
-        if let Some(parent) = self.current_dir.parent() {
-            self.set_directory(&parent.to_path_buf());
+    pub fn previous_dir(&mut self) {
+        if let Some(path) = self.files.first().cloned() {
+            if let Some(parent) = path.parent() {
+                self.set_directory(parent);
+            }
         }
-        Ok(())
-    }
-
-    pub fn current_dir(&self) -> &Path {
-        &self.current_dir
     }
 
     pub fn get_files(&self) -> &[PathBuf] {
@@ -101,6 +97,5 @@ impl Ex {
 
     pub fn reset(&mut self) {
         self.files = Vec::new();
-        self.current_dir = PathBuf::default()
     }
 }

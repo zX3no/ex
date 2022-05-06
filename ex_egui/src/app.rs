@@ -82,8 +82,13 @@ impl eframe::App for App {
             //Button Styling
             ui.style_mut().visuals.button_frame = false;
 
-            let files = ex.get_files().to_owned();
-            let current_dir = ex.current_dir().to_path_buf();
+            let mut files = ex.get_files().to_owned();
+            //the first directory is the selected one
+            let current_dir = if !files.is_empty() {
+                files.remove(0)
+            } else {
+                PathBuf::default()
+            };
 
             if !files.is_empty() {
                 let path = current_dir.to_string_lossy().to_string();
@@ -114,6 +119,7 @@ impl eframe::App for App {
                 });
 
                 TableBuilder::new(ui)
+                    .striped(true)
                     .column(Size::remainder().at_least(280.0))
                     .column(Size::remainder().at_least(20.0))
                     .column(Size::remainder().at_least(20.0))
@@ -140,10 +146,6 @@ impl eframe::App for App {
                                 let name = name.to_string_lossy().to_string();
 
                                 row.col(|ui| {
-                                    if file == current_dir {
-                                        return;
-                                    }
-
                                     let pressed_enter = ui.input().key_pressed(Key::Enter);
                                     let response = if file == self.renamed_file.path {
                                         //TODO: pre select the file name
@@ -167,14 +169,12 @@ impl eframe::App for App {
                                                 //reset and update
                                                 self.renamed_file = Rename::default();
                                             }
-                                        } else if i == 0 {
-                                            ex.previous_dir().unwrap();
                                         } else if file.is_dir() {
                                             ex.set_directory(&file);
                                         }
                                     }
 
-                                    if response.double_clicked() && i != 0 && !file.is_dir() {
+                                    if response.double_clicked() && !file.is_dir() {
                                         ex.open(&file).unwrap();
                                     }
 
