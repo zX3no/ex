@@ -31,12 +31,14 @@ impl App {
 }
 
 impl eframe::App for App {
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
         let Self {
             ex,
             copied_file: _,
             renamed_file: _,
         } = self;
+
+        // ctx.input().pointer.button_down(PointerButton::)
 
         TopBottomPanel::top("top_panel").show(ctx, |ui| {
             menu::bar(ui, |ui| {
@@ -76,6 +78,10 @@ impl eframe::App for App {
 
         CentralPanel::default().show(ctx, |ui| {
             warn_if_debug_build(ui);
+
+            //Button Styling
+            ui.style_mut().visuals.button_frame = false;
+
             let files = ex.get_files().to_owned();
             let current_dir = ex.current_dir().to_path_buf();
 
@@ -86,7 +92,13 @@ impl eframe::App for App {
                 //TODO: only show the first 5 paths in header
                 ui.columns(splits.len(), |columns| {
                     for (i, s) in splits.iter().enumerate() {
-                        if columns[i].add(Button::new(*s).wrap(false)).clicked() {
+                        //Add the frame back just for these buttons
+                        columns[i].style_mut().visuals.button_frame = true;
+
+                        //Remove the : in D:/
+                        let label = &*s.replace(':', "");
+
+                        if columns[i].add(Button::new(label).wrap(false)).clicked() {
                             let selection = &splits[..i + 1];
 
                             //join doesn't work if there is only one item

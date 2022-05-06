@@ -5,7 +5,7 @@ edition = "2021"
 default-run = "ex_egui"
 
 [dependencies]
-egui = "0.18.0"
 eframe = "0.18.0"
+egui = {version  = "0.18.0", path = "../../egui/egui"}
 ex_core = { path = "../ex_core" }
 egui_extras = "0.18.0"
