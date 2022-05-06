@@ -99,15 +99,15 @@ impl eframe::App for App {
                 let splits: Vec<&str> = path.split('\\').filter(|str| !str.is_empty()).collect();
 
                 //TODO: only show the first 5 paths in header
-                ui.columns(splits.len(), |columns| {
+                ui.horizontal(|ui| {
+                    ui.style_mut().visuals.button_frame = true;
                     for (i, s) in splits.iter().enumerate() {
                         //Add the frame back just for these buttons
-                        columns[i].style_mut().visuals.button_frame = true;
 
                         //Remove the : in D:/
                         let label = &*s.replace(':', "");
 
-                        if columns[i].add(Button::new(label).wrap(false)).clicked() {
+                        if ui.add(Button::new(label).wrap(false)).clicked() {
                             let selection = &splits[..i + 1];
 
                             //join doesn't work if there is only one item
@@ -122,12 +122,14 @@ impl eframe::App for App {
                     }
                 });
 
+                ui.separator();
+
                 TableBuilder::new(ui)
                     .striped(true)
-                    .column(Size::remainder().at_least(200.0))
-                    .column(Size::remainder().at_least(20.0))
-                    .column(Size::remainder().at_least(20.0))
-                    .column(Size::remainder().at_least(20.0))
+                    .column(Size::remainder().at_least(150.0))
+                    .column(Size::remainder().at_least(15.0))
+                    .column(Size::remainder().at_least(15.0))
+                    .column(Size::remainder().at_least(15.0))
                     .header(20.0, |mut header| {
                         header.col(|ui| {
                             ui.heading("Name");
