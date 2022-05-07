@@ -1,8 +1,8 @@
-use chrono::{prelude::*, Duration};
+use chrono::prelude::*;
 use jwalk::WalkDir;
 use std::{
     env, fs,
-    io::Result,
+    io::{self},
     os::windows::prelude::MetadataExt,
     path::{Path, PathBuf},
 };
@@ -56,25 +56,21 @@ impl Ex {
                 format!("{} MB", size / 1_000_000)
             };
 
-            if path.is_dir() {
-                Some(String::from(""))
-            } else {
-                Some(size_str)
+            if !path.is_dir() {
+                return Some(size_str);
             }
-        } else {
-            None
         }
+        None
     }
 
     pub fn last_modified(path: &Path) -> Option<String> {
         if let Ok(metadata) = path.metadata() {
             let last_write_time = metadata.last_write_time();
-            let date = Ex::windows_date(last_write_time as i64).unwrap();
-
-            Some(date.format("%d/%m/%Y %H:%M").to_string())
-        } else {
-            None
+            if let Some(date) = Ex::windows_date(last_write_time as i64) {
+                return Some(date.format("%d/%m/%Y %H:%M").to_string());
+            }
         }
+        None
     }
 
     // 1601-01-01 is 11,644,473,600 seconds before Unix epoch.
@@ -88,27 +84,30 @@ impl Ex {
         NaiveDateTime::from_timestamp_opt(t, n)
     }
 
-    pub fn open(&self, path: &Path) -> Result<()> {
-        open::that(path)
+    pub fn open(&self, path: &Path) -> Result<(), String> {
+        match open::that(path) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(format!("{:?}", e)),
+        }
     }
 
-    pub fn rename(&self, new_name: &str, file: &Path) -> Result<()> {
+    pub fn rename(&self, new_name: &str, file: &Path) -> io::Result<()> {
         let mut new_path = file.to_path_buf();
         new_path.set_file_name(new_name);
 
         fs::rename(file, new_path)
     }
 
-    pub fn delete(&self, file: &Path) -> std::result::Result<(), trash::Error> {
+    pub fn delete(&self, file: &Path) -> Result<(), trash::Error> {
         trash::delete(file)
     }
 
-    pub fn create_file(&self, path: &Path) -> Result<()> {
+    pub fn create_file(&self, path: &Path) -> io::Result<()> {
         fs::File::create(path)?;
         Ok(())
     }
 
-    pub fn create_dir(&self, path: &Path) -> Result<()> {
+    pub fn create_dir(&self, path: &Path) -> io::Result<()> {
         fs::create_dir(path)
     }
 

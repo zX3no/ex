@@ -1,5 +1,4 @@
 #![allow(unreachable_code)]
-
 use eframe::egui::*;
 use egui_extras::*;
 use ex_core::Ex;
@@ -82,22 +81,18 @@ impl eframe::App for App {
         CentralPanel::default().show(ctx, |ui| {
             warn_if_debug_build(ui);
 
-            //Button Styling
-            ui.style_mut().visuals.button_frame = false;
-
+            //get the files
             let mut files = ex.get_files().to_owned();
-
-            //the first directory is the selected one
             let current_dir = if !files.is_empty() {
                 files.remove(0)
             } else {
                 PathBuf::default()
             };
 
+            //Header
             if !files.is_empty() {
                 let path = current_dir.to_string_lossy().to_string();
                 let splits: Vec<&str> = path.split('\\').filter(|str| !str.is_empty()).collect();
-
                 //TODO: only show the first 5 paths in header
                 ui.horizontal(|ui| {
                     ui.style_mut().visuals.button_frame = true;
@@ -123,13 +118,21 @@ impl eframe::App for App {
                 });
 
                 ui.separator();
+            }
 
+            //Button Styling
+            let style = ui.style_mut();
+            style.visuals.button_frame = false;
+            style.spacing.button_padding = Vec2::new(0.0, 0.0);
+
+            if !files.is_empty() {
                 TableBuilder::new(ui)
                     .striped(true)
-                    .column(Size::remainder().at_least(150.0))
-                    .column(Size::remainder().at_least(15.0))
-                    .column(Size::remainder().at_least(15.0))
-                    .column(Size::remainder().at_least(15.0))
+                    .resizable(true)
+                    .column(Size::relative(0.45))
+                    .column(Size::relative(0.20))
+                    .column(Size::relative(0.20))
+                    .column(Size::relative(0.15))
                     .header(20.0, |mut header| {
                         header.col(|ui| {
                             ui.heading("Name");
@@ -182,7 +185,10 @@ impl eframe::App for App {
                                     }
 
                                     if response.double_clicked() && !file.is_dir() {
-                                        ex.open(&file).unwrap();
+                                        if let Err(e) = ex.open(&file) {
+                                            //TODO: print to error bar like Onivim
+                                            dbg!(e);
+                                        }
                                     }
 
                                     response.context_menu(|ui| {
