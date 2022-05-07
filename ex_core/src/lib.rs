@@ -13,6 +13,11 @@ pub struct Ex {
 }
 
 impl Ex {
+    pub fn new() -> Self {
+        let mut s = Self::default();
+        s.set_directory(Path::new("C:\\"));
+        s
+    }
     pub fn set_directory(&mut self, path: &Path) {
         if env::set_current_dir(path).is_ok() {
             let mut files: Vec<PathBuf> = WalkDir::new(&path)

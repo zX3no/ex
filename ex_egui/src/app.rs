@@ -25,7 +25,7 @@ impl App {
         cc.egui_ctx.set_visuals(Visuals::dark());
 
         Self {
-            ex: Ex::default(),
+            ex: Ex::new(),
             copied_file: PathBuf::new(),
             renamed_file: Rename::default(),
         }
@@ -94,21 +94,25 @@ impl eframe::App for App {
                 warn_if_debug_build(ui);
 
                 //Header
+                //TODO: only show the first 5 paths
                 if !files.is_empty() {
                     let splits: Vec<&str> = current_dir_string
                         .split('\\')
                         .filter(|str| !str.is_empty())
                         .collect();
-                    //TODO: only show the first 5 paths in header
+
                     ui.horizontal(|ui| {
+                        //Add the frame back just for these buttons
                         ui.style_mut().visuals.button_frame = true;
+
                         for (i, s) in splits.iter().enumerate() {
-                            //Add the frame back just for these buttons
-
-                            //Remove the : in D:/
-                            let label = &*s.replace(':', "");
-
-                            if ui.add(Button::new(label).wrap(false)).clicked() {
+                            let label = if s.contains(':') {
+                                //TODO: drive name
+                                format!("Drive ({})", s)
+                            } else {
+                                s.to_string()
+                            };
+                            if ui.button(label).clicked() {
                                 let selection = &splits[..i + 1];
 
                                 //join doesn't work if there is only one item
@@ -169,8 +173,10 @@ impl eframe::App for App {
                                                 .text_edit_singleline(&mut self.renamed_file.name);
                                             r.request_focus();
                                             r
+                                        } else if file.is_file() {
+                                            ui.add(Button::new(&format!("🖹 {}", name)).wrap(false))
                                         } else {
-                                            ui.add(Button::new(&name).wrap(false))
+                                            ui.add(Button::new(&format!("🗀 {}", name)).wrap(false))
                                         };
 
                                         if response.clicked() {
@@ -259,37 +265,6 @@ impl eframe::App for App {
                                     }
                                 });
                             });
-                        });
-                } else {
-                    let drives = vec!["C:\\", "D:\\"];
-                    TableBuilder::new(ui)
-                        .column(Size::remainder().at_least(280.0))
-                        .column(Size::remainder().at_least(20.0))
-                        .column(Size::remainder().at_least(20.0))
-                        .column(Size::remainder().at_least(20.0))
-                        .header(20.0, |mut header| {
-                            header.col(|ui| {
-                                ui.heading("Name");
-                            });
-                            header.col(|ui| {
-                                ui.heading("Date modified");
-                            });
-                            header.col(|ui| {
-                                ui.heading("Type");
-                            });
-                            header.col(|ui| {
-                                ui.heading("Size");
-                            });
-                        })
-                        .body(|body| {
-                            body.rows(20.0, drives.len(), |i, mut row| {
-                                let drive = drives[i];
-                                row.col(|ui| {
-                                    if ui.button(drive).clicked() {
-                                        ex.set_directory(Path::new(drive));
-                                    };
-                                });
-                            })
                         });
                 };
             })
