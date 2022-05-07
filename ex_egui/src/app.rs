@@ -145,6 +145,7 @@ impl eframe::App for App {
                         });
                     })
                     .body(|body| {
+                        #[allow(unused)]
                         body.rows(20.0, files.len(), |i, mut row| {
                             let file = files[i].clone();
 
@@ -205,11 +206,43 @@ impl eframe::App for App {
                                     });
                                 });
                             }
-                            row.col(|_| {});
-                            row.col(|_| {});
+
                             row.col(|ui| {
-                                if let Some(size) = ex.file_size(&file) {
-                                    ui.label(size);
+                                if let Some(date) = Ex::last_modified(&file) {
+                                    ui.button(date);
+                                }
+                            });
+
+                            row.col(|ui| {
+                                if let Some(ex) = file.extension() {
+                                    let ex = ex.to_string_lossy().to_string();
+                                    let file_type = match ex.as_str() {
+                                        "lnk" => "Shortcut",
+                                        "zip" => "zip Archive",
+                                        "exe" => "Application",
+                                        _ => &ex,
+                                    };
+                                    ui.button(file_type);
+                                } else if let Some(file_name) = file.file_name() {
+                                    let file_name = file_name.to_string_lossy().to_string();
+                                    if file.is_dir() {
+                                        ui.button("File folder");
+                                    } else if file_name.starts_with('.') {
+                                        let file_type = match file_name.as_str() {
+                                            ".gitignore" => "Git Ignore",
+                                            ".gitconfig" => "Git Config",
+                                            _ => "Unknown dot file",
+                                        };
+                                        ui.button(file_type);
+                                    } else {
+                                        ui.button("File folder");
+                                    }
+                                }
+                            });
+
+                            row.col(|ui| {
+                                if let Some(size) = Ex::file_size(&file) {
+                                    ui.button(size);
                                 }
                             });
                         });

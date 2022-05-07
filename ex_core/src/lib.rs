@@ -40,22 +40,18 @@ impl Ex {
     }
 
     //TODO: too slow on windows
-    pub fn file_size(&self, path: &Path) -> Option<String> {
+    pub fn file_size(path: &Path) -> Option<String> {
         if let Ok(metadata) = path.metadata() {
             let size = metadata.file_size();
-            #[allow(clippy::if_same_then_else)]
             let size_str = if size < 1_000 {
                 if size == 0 {
                     String::from("0 KB")
                 } else {
                     String::from("1 KB")
                 }
-                // String::from("< 1 KB")
-                // format!("{} B", size)
             } else if size < 1_000_000 {
                 format!("{} KB", size / 1_000)
             } else {
-                // format!("{} KB", size / 1_000)
                 format!("{} MB", size / 1_000_000)
             };
 
@@ -67,6 +63,13 @@ impl Ex {
         } else {
             None
         }
+    }
+
+    pub fn last_modified(path: &Path) -> Option<String> {
+        if let Ok(metadata) = path.metadata() {
+            let last_write_time = metadata.last_write_time();
+        }
+        None
     }
 
     pub fn open(&self, path: &Path) -> Result<()> {
