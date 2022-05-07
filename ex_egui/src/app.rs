@@ -216,11 +216,12 @@ impl eframe::App for App {
                             row.col(|ui| {
                                 if let Some(ex) = file.extension() {
                                     let ex = ex.to_string_lossy().to_string();
+                                    let unknown = format!(".{ex} file");
                                     let file_type = match ex.as_str() {
                                         "lnk" => "Shortcut",
                                         "zip" => "zip Archive",
                                         "exe" => "Application",
-                                        _ => &ex,
+                                        _ => unknown.as_str(),
                                     };
                                     ui.button(file_type);
                                 } else if let Some(file_name) = file.file_name() {

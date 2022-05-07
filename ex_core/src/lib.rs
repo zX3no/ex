@@ -1,3 +1,4 @@
+use chrono::{prelude::*, Duration};
 use jwalk::WalkDir;
 use std::{
     env, fs,
@@ -68,8 +69,23 @@ impl Ex {
     pub fn last_modified(path: &Path) -> Option<String> {
         if let Ok(metadata) = path.metadata() {
             let last_write_time = metadata.last_write_time();
+            let date = Ex::windows_date(last_write_time as i64).unwrap();
+
+            Some(date.format("%d/%m/%Y %H:%M").to_string())
+        } else {
+            None
         }
-        None
+    }
+
+    // 1601-01-01 is 11,644,473,600 seconds before Unix epoch.
+    //https://github.com/oylenshpeegul/Epochs-rust/blob/master/src/lib.rs
+    fn windows_date(x: i64) -> Option<NaiveDateTime> {
+        let d = 10_000_000;
+        let s = -11_644_473_600;
+        let q = x / d;
+        let n = ((x % d) * (1_000_000_000 / d)) as u32;
+        let t = q.checked_add(s)?;
+        NaiveDateTime::from_timestamp_opt(t, n)
     }
 
     pub fn open(&self, path: &Path) -> Result<()> {
