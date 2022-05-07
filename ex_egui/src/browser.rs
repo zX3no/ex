@@ -27,6 +27,10 @@ impl Browser {
             renamed_file: Rename::default(),
         }
     }
+    pub fn set_path(mut self, path: &Path) -> Self {
+        self.ex.set_directory(path);
+        self
+    }
     pub fn title(&self) -> String {
         self.ex.get_files()[0]
             .file_name()
@@ -53,40 +57,38 @@ impl Browser {
             .show(ctx, |ui| {
                 //Header
                 //TODO: only show the first 5 paths
-                if !files.is_empty() {
-                    let splits: Vec<&str> = current_dir_string
-                        .split('\\')
-                        .filter(|str| !str.is_empty())
-                        .collect();
+                let splits: Vec<&str> = current_dir_string
+                    .split('\\')
+                    .filter(|str| !str.is_empty())
+                    .collect();
 
-                    ui.horizontal(|ui| {
-                        //Add the frame back just for these buttons
-                        ui.style_mut().visuals.button_frame = true;
+                ui.horizontal(|ui| {
+                    //Add the frame back just for these buttons
+                    ui.style_mut().visuals.button_frame = true;
 
-                        for (i, s) in splits.iter().enumerate() {
-                            let label = if s.contains(':') {
-                                //TODO: drive name
-                                format!("Drive ({})", s)
+                    for (i, s) in splits.iter().enumerate() {
+                        let label = if s.contains(':') {
+                            //TODO: drive name
+                            format!("Drive ({})", s)
+                        } else {
+                            s.to_string()
+                        };
+                        if ui.button(label).clicked() {
+                            let selection = &splits[..i + 1];
+
+                            //join doesn't work if there is only one item
+                            let path = if selection.len() == 1 {
+                                format!("{}\\", selection.join(" "))
                             } else {
-                                s.to_string()
+                                selection.join("\\")
                             };
-                            if ui.button(label).clicked() {
-                                let selection = &splits[..i + 1];
 
-                                //join doesn't work if there is only one item
-                                let path = if selection.len() == 1 {
-                                    format!("{}\\", selection.join(" "))
-                                } else {
-                                    selection.join("\\")
-                                };
-
-                                ex.set_directory(Path::new(&path));
-                            }
+                            ex.set_directory(Path::new(&path));
                         }
-                    });
+                    }
+                });
 
-                    ui.separator();
-                }
+                ui.separator();
 
                 //Button Styling
                 let style = ui.style_mut();
@@ -224,6 +226,8 @@ impl Browser {
                                 });
                             });
                         });
+                } else {
+                    ui.centered_and_justified(|ui| ui.label("Folder is empty."));
                 };
             })
             .response

@@ -37,9 +37,11 @@ impl eframe::App for App {
                     if label.clicked() {
                         *selected_browser = i;
                     };
+
                     if label.middle_clicked() {
                         remove = Some(i);
                     }
+
                     label.context_menu(|ui| {
                         if ui.button("Close").clicked() {
                             remove = Some(i);
@@ -49,8 +51,10 @@ impl eframe::App for App {
                 }
 
                 if let Some(i) = remove {
-                    browser.remove(i);
-                    *selected_browser = selected_browser.saturating_sub(1);
+                    if browser.len() != 1 {
+                        browser.remove(i);
+                        *selected_browser = selected_browser.saturating_sub(1);
+                    }
                 }
 
                 if ui.button("+").clicked() {
@@ -60,7 +64,7 @@ impl eframe::App for App {
             });
         });
 
-        let browser = &mut browser[*selected_browser];
+        let b = &mut browser[*selected_browser];
 
         SidePanel::left("side_panel").show(ctx, |ui| {
             ui.style_mut().visuals.button_frame = false;
@@ -68,18 +72,18 @@ impl eframe::App for App {
             CollapsingHeader::new("Quick Access")
                 .default_open(true)
                 .show(ui, |ui| {
-                    if ui.button("Desktop").clicked() {
-                        browser
-                            .ex
-                            .set_directory(Path::new("C:\\Users\\Bay\\Desktop"));
+                    let desktop = ui.button("Desktop");
+                    if desktop.clicked() {
+                        b.ex.set_directory(Path::new("C:\\Users\\Bay\\Desktop"));
+                    }
+                    if desktop.middle_clicked() {
+                        // browser.push(Browser::new().set_path(Path::new("C:\\Users\\Bay\\Desktop")));
                     }
                     if ui.button("Downloads").clicked() {
-                        browser
-                            .ex
-                            .set_directory(Path::new("C:\\Users\\Bay\\Downloads"));
+                        b.ex.set_directory(Path::new("C:\\Users\\Bay\\Downloads"));
                     }
                     if ui.button("Music").clicked() {
-                        browser.ex.set_directory(Path::new("D:\\Music"));
+                        b.ex.set_directory(Path::new("D:\\Music"));
                     }
                 });
 
@@ -87,15 +91,15 @@ impl eframe::App for App {
                 .default_open(true)
                 .show(ui, |ui| {
                     if ui.button("C:\\").clicked() {
-                        browser.ex.set_directory(&PathBuf::from("C:\\"));
+                        b.ex.set_directory(&PathBuf::from("C:\\"));
                     };
                     if ui.button("D:\\").clicked() {
-                        browser.ex.set_directory(&PathBuf::from("D:\\"));
+                        b.ex.set_directory(&PathBuf::from("D:\\"));
                     };
                 });
         });
 
-        browser.ui(ctx);
+        b.ui(ctx);
 
         //TODO: footer
         // TopBottomPanel::bottom("footer").show(ctx, |ui| {
