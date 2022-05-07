@@ -69,6 +69,9 @@ impl Tabs {
                 if ui.button("+").clicked() {
                     self.add_new();
                 };
+
+                // let mut text = String::new();
+                // ui.text_edit_singleline(&mut text);
             });
         });
     }

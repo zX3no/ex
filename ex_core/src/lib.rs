@@ -18,6 +18,23 @@ impl Ex {
         s.set_directory(Path::new("C:\\"));
         s
     }
+
+    pub fn current_path(&self) -> &Path {
+        &self.files[0]
+    }
+
+    pub fn current_path_string(&self) -> String {
+        self.files[0].to_string_lossy().to_string()
+    }
+
+    pub fn current_file(&self) -> String {
+        self.files[0]
+            .file_name()
+            .unwrap_or_else(|| self.files[0].as_os_str())
+            .to_string_lossy()
+            .to_string()
+    }
+
     pub fn set_directory(&mut self, path: &Path) {
         if env::set_current_dir(path).is_ok() {
             let mut files: Vec<PathBuf> = WalkDir::new(&path)
@@ -29,6 +46,7 @@ impl Ex {
                 .collect();
 
             files.sort_by_key(|a| !a.is_dir());
+
             self.files = files;
         };
     }

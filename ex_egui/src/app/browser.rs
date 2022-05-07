@@ -44,27 +44,38 @@ impl Browser {
             .to_string()
     }
     pub fn ui(&mut self, ctx: &Context) -> BrowserEvent {
-        let Self {
-            ex,
-            copied_file: _,
-            renamed_file: _,
-        } = self;
+        let cd = self.ex.current_path_string();
+        let (response, event) = self.center(ctx);
+        response.context_menu(|ui| {
+            if ui.button("New File").clicked() {
+                ui.close_menu();
+            };
 
+            if ui.button("Open in Terminal").clicked() {
+                Command::new("wt.exe").args(&["-d", &cd]).output().unwrap();
+                ui.close_menu();
+            };
+
+            if ui.button("Open in VSCode").clicked() {
+                Command::new("cmd")
+                    .args(&["/c", "code", &cd])
+                    .output()
+                    .unwrap();
+                ui.close_menu();
+            };
+        });
+
+        event
+    }
+    fn center(&mut self, ctx: &Context) -> (Response, BrowserEvent) {
         let mut event = BrowserEvent::None;
-
-        let mut files = ex.get_files().to_owned();
-        let current_dir = if !files.is_empty() {
-            files.remove(0)
-        } else {
-            PathBuf::default()
-        };
-        let current_dir_string = current_dir.to_string_lossy().to_string();
-
-        CentralPanel::default()
+        let response = CentralPanel::default()
             .show(ctx, |ui| {
                 //Header
                 //TODO: only show the first 5 paths
-                let splits: Vec<&str> = current_dir_string
+                let current_dir = self.ex.current_path_string();
+                let files = self.ex.get_files().to_owned();
+                let splits: Vec<&str> = current_dir
                     .split('\\')
                     .filter(|str| !str.is_empty())
                     .collect();
@@ -90,7 +101,7 @@ impl Browser {
                                 selection.join("\\")
                             };
 
-                            ex.set_directory(Path::new(&path));
+                            self.ex.set_directory(Path::new(&path));
                         }
                     }
                 });
@@ -149,22 +160,23 @@ impl Browser {
                                         if response.clicked() {
                                             if file == self.renamed_file.path {
                                                 if pressed_enter || response.lost_focus() {
-                                                    ex.rename(
-                                                        &self.renamed_file.name,
-                                                        &self.renamed_file.path,
-                                                    )
-                                                    .unwrap();
+                                                    self.ex
+                                                        .rename(
+                                                            &self.renamed_file.name,
+                                                            &self.renamed_file.path,
+                                                        )
+                                                        .unwrap();
 
                                                     //reset and update
                                                     self.renamed_file = Rename::default();
                                                 }
                                             } else if file.is_dir() {
-                                                ex.set_directory(&file);
+                                                self.ex.set_directory(&file);
                                             }
                                         }
 
                                         if response.double_clicked() && !file.is_dir() {
-                                            if let Err(e) = ex.open(&file) {
+                                            if let Err(e) = self.ex.open(&file) {
                                                 //TODO: print to error bar like Onivim
                                                 dbg!(e);
                                             }
@@ -241,28 +253,8 @@ impl Browser {
                     ui.centered_and_justified(|ui| ui.label("Folder is empty."));
                 };
             })
-            .response
-            .context_menu(|ui| {
-                if ui.button("New File").clicked() {
-                    ui.close_menu();
-                };
+            .response;
 
-                if ui.button("Open in Terminal").clicked() {
-                    Command::new("wt.exe")
-                        .args(&["-d", &current_dir_string])
-                        .output()
-                        .unwrap();
-                    ui.close_menu();
-                };
-
-                if ui.button("Open in VSCode").clicked() {
-                    Command::new("cmd")
-                        .args(&["/c", "code", &current_dir_string])
-                        .output()
-                        .unwrap();
-                    ui.close_menu();
-                };
-            });
-        event
+        (response, event)
     }
 }
