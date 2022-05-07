@@ -6,22 +6,22 @@ use std::{
     process::Command,
 };
 
-#[derive(Default)]
-pub struct Rename {
-    pub path: PathBuf,
-    pub name: String,
-}
-
 pub enum BrowserEvent {
     Add(PathBuf),
     None,
 }
 
+pub enum TextQuery {
+    NewFile(String, PathBuf),
+    Rename(String, PathBuf),
+}
+
 pub struct Browser {
     pub ex: Ex,
     copied_file: PathBuf,
-    renamed_file: Rename,
     pub search: String,
+    pub text_query: Option<TextQuery>,
+    refocus: bool,
 }
 
 impl Browser {
@@ -29,8 +29,9 @@ impl Browser {
         Self {
             ex: Ex::new(),
             copied_file: PathBuf::new(),
-            renamed_file: Rename::default(),
             search: String::new(),
+            text_query: None,
+            refocus: true,
         }
     }
     pub fn set_path(mut self, path: &Path) -> Self {
@@ -161,67 +162,58 @@ impl Browser {
                                     let name = name.to_string_lossy().to_string();
 
                                     row.col(|ui| {
-                                        let pressed_enter = ui.input().key_pressed(Key::Enter);
-                                        let response = if file == self.renamed_file.path {
-                                            //TODO: pre select the file name
-                                            let r = ui
-                                                .text_edit_singleline(&mut self.renamed_file.name);
-                                            r.request_focus();
-                                            r
-                                        } else if file.is_file() {
-                                            ui.add(Button::new(&format!("🖹  {}", name)).wrap(false))
-                                        } else {
-                                            ui.add(Button::new(&format!("🗀  {}", name)).wrap(false))
-                                        };
-
-                                        if response.clicked() {
-                                            if file == self.renamed_file.path {
-                                                if pressed_enter || response.lost_focus() {
-                                                    self.ex
-                                                        .rename(
-                                                            &self.renamed_file.name,
-                                                            &self.renamed_file.path,
-                                                        )
-                                                        .unwrap();
-
-                                                    //reset and update
-                                                    self.renamed_file = Rename::default();
-                                                }
-                                            } else if file.is_dir() {
+                                        if self.text_query(ui, &file) {
+                                            let button = if file.is_file() {
+                                                ui.add(
+                                                    Button::new(&format!("🖹  {}", name))
+                                                        .wrap(false),
+                                                )
+                                            } else {
+                                                ui.add(
+                                                    Button::new(&format!("🗀  {}", name))
+                                                        .wrap(false),
+                                                )
+                                            };
+                                            if button.clicked() && file.is_dir() {
                                                 self.ex.set_directory(&file);
                                             }
-                                        }
-
-                                        if response.double_clicked() && !file.is_dir() {
-                                            if let Err(e) = self.ex.open(&file) {
-                                                //TODO: print to error bar like Onivim
-                                                dbg!(e);
+                                            if button.double_clicked() && !file.is_dir() {
+                                                if let Err(e) = self.ex.open(&file) {
+                                                    //TODO: print to error bar like Onivim
+                                                    dbg!(e);
+                                                }
                                             }
-                                        }
+                                            if button.middle_clicked() && file.is_dir() {
+                                                event = BrowserEvent::Add(file.clone());
+                                            }
+                                            button.context_menu(|ui| {
+                                                if ui.button("Cut").clicked() {
+                                                    ui.close_menu();
+                                                };
 
-                                        if response.middle_clicked() && file.is_dir() {
-                                            event = BrowserEvent::Add(file.clone());
-                                        }
+                                                if ui.button("Copy").clicked() {
+                                                    self.copied_file = file.clone();
+                                                    ui.close_menu();
+                                                };
 
-                                        response.context_menu(|ui| {
-                                            if ui.button("Cut").clicked() {
-                                                ui.close_menu();
-                                            };
-                                            if ui.button("Copy").clicked() {
-                                                self.copied_file = file.clone();
-                                                ui.close_menu();
-                                            };
-                                            ui.separator();
-                                            if ui.button("Rename").clicked() {
-                                                self.renamed_file.path = file.clone();
-                                                self.renamed_file.name = name.clone();
-                                                ui.close_menu();
-                                            };
-                                            ui.separator();
-                                            if ui.button("Delete").clicked() {
-                                                ui.close_menu();
-                                            };
-                                        });
+                                                ui.separator();
+
+                                                if ui.button("Rename").clicked() {
+                                                    self.text_query = Some(TextQuery::Rename(
+                                                        name.clone(),
+                                                        file.clone(),
+                                                    ));
+                                                    ui.close_menu();
+                                                };
+
+                                                ui.separator();
+
+                                                if ui.button("Delete").clicked() {
+                                                    //TODO: confirmation box then delete
+                                                    ui.close_menu();
+                                                };
+                                            });
+                                        }
                                     });
                                 }
 
@@ -273,5 +265,38 @@ impl Browser {
             .response;
 
         (response, event)
+    }
+    fn text_query(&mut self, ui: &mut Ui, file: &PathBuf) -> bool {
+        if let Some(query) = &mut self.text_query {
+            let (text, path) = match query {
+                TextQuery::NewFile(text, path) => (text, path),
+                TextQuery::Rename(text, path) => (text, path),
+            };
+            if file != path {
+                return false;
+            }
+            let pressed_enter = ui.input().key_pressed(Key::Enter);
+            let text_edit = ui.text_edit_singleline(text);
+
+            if self.refocus {
+                text_edit.request_focus();
+                self.refocus = false;
+            }
+
+            if text_edit.lost_focus() || pressed_enter {
+                dbg!("renamed!");
+                // self.ex
+                //     .rename(
+                //         &self.renamed_file.name,
+                //         &self.renamed_file.path,
+                //     )
+                //     .unwrap();
+
+                //reset
+                self.text_query = None;
+                self.refocus = true;
+            }
+        }
+        true
     }
 }

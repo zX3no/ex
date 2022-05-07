@@ -10,7 +10,6 @@ pub struct App {
 
 impl App {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        //dark mode
         cc.egui_ctx.set_visuals(Visuals::dark());
 
         Self { tabs: Tabs::new() }
@@ -25,7 +24,7 @@ impl eframe::App for App {
 
         tabs.quick_access(ctx);
 
-        tabs.ui(ctx);
+        tabs.body(ctx);
 
         //TODO: footer
         // TopBottomPanel::bottom("footer").show(ctx, |ui| {

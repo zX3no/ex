@@ -28,7 +28,7 @@ impl Tabs {
             self.index = self.index.saturating_sub(1);
         }
     }
-    pub fn ui(&mut self, ctx: &Context) {
+    pub fn body(&mut self, ctx: &Context) {
         match self.browsers[self.index].ui(ctx) {
             BrowserEvent::Add(path) => self.add(&path),
             BrowserEvent::None => (),
@@ -72,7 +72,7 @@ impl Tabs {
 
                 ui.with_layout(Layout::right_to_left(), |ui| {
                     let search = &mut self.browsers[self.index].search;
-                    ui.add(TextEdit::singleline(search));
+                    ui.add(TextEdit::singleline(search).desired_width(150.0));
                 });
             });
         });

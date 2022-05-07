@@ -45,6 +45,13 @@ impl Ex {
                 .map(|dir| dir.path())
                 .collect();
 
+            files.sort_by_key(|a| {
+                !a.file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .starts_with('.')
+            });
+
             files.sort_by_key(|a| !a.is_dir());
 
             self.files = files;
@@ -63,7 +70,6 @@ impl Ex {
         &self.files
     }
 
-    //TODO: too slow on windows
     pub fn file_size(path: &Path) -> Option<String> {
         if let Ok(metadata) = path.metadata() {
             let size = metadata.file_size();
