@@ -28,7 +28,11 @@ impl Browser {
         }
     }
     pub fn title(&self) -> String {
-        self.ex.get_files()[0].to_string_lossy().to_string()
+        self.ex.get_files()[0]
+            .file_name()
+            .unwrap_or_else(|| self.ex.get_files()[0].as_os_str())
+            .to_string_lossy()
+            .to_string()
     }
     pub fn ui(&mut self, ctx: &Context) {
         let Self {

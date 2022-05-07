@@ -29,12 +29,28 @@ impl eframe::App for App {
 
         TopBottomPanel::top("top_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
+                let mut remove = None;
                 for (i, b) in browser.iter().enumerate() {
                     let selected = i == *selected_browser;
 
-                    if ui.selectable_label(selected, b.title()).clicked() {
+                    let label = ui.selectable_label(selected, b.title());
+                    if label.clicked() {
                         *selected_browser = i;
                     };
+                    if label.middle_clicked() {
+                        remove = Some(i);
+                    }
+                    label.context_menu(|ui| {
+                        if ui.button("Close").clicked() {
+                            remove = Some(i);
+                            ui.close_menu();
+                        };
+                    });
+                }
+
+                if let Some(i) = remove {
+                    browser.remove(i);
+                    *selected_browser = selected_browser.saturating_sub(1);
                 }
 
                 if ui.button("+").clicked() {
