@@ -1,7 +1,6 @@
 use app::App;
 
 mod app;
-mod browser;
 
 fn main() {
     eframe::run_native(

@@ -13,6 +13,11 @@ pub struct Rename {
     pub name: String,
 }
 
+pub enum BrowserEvent {
+    Add(PathBuf),
+    None,
+}
+
 pub struct Browser {
     pub ex: Ex,
     copied_file: PathBuf,
@@ -38,12 +43,14 @@ impl Browser {
             .to_string_lossy()
             .to_string()
     }
-    pub fn ui(&mut self, ctx: &Context) {
+    pub fn ui(&mut self, ctx: &Context) -> BrowserEvent {
         let Self {
             ex,
             copied_file: _,
             renamed_file: _,
         } = self;
+
+        let mut event = BrowserEvent::None;
 
         let mut files = ex.get_files().to_owned();
         let current_dir = if !files.is_empty() {
@@ -134,9 +141,9 @@ impl Browser {
                                             r.request_focus();
                                             r
                                         } else if file.is_file() {
-                                            ui.add(Button::new(&format!("🖹 {}", name)).wrap(false))
+                                            ui.add(Button::new(&format!("🖹  {}", name)).wrap(false))
                                         } else {
-                                            ui.add(Button::new(&format!("🗀 {}", name)).wrap(false))
+                                            ui.add(Button::new(&format!("🗀  {}", name)).wrap(false))
                                         };
 
                                         if response.clicked() {
@@ -161,6 +168,10 @@ impl Browser {
                                                 //TODO: print to error bar like Onivim
                                                 dbg!(e);
                                             }
+                                        }
+
+                                        if response.middle_clicked() && file.is_dir() {
+                                            event = BrowserEvent::Add(file.clone());
                                         }
 
                                         response.context_menu(|ui| {
@@ -252,5 +263,6 @@ impl Browser {
                     ui.close_menu();
                 };
             });
+        event
     }
 }
