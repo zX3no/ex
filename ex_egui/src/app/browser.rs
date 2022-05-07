@@ -1,11 +1,10 @@
+use eframe::egui::*;
+use egui_extras::*;
+use ex_core::Ex;
 use std::{
     path::{Path, PathBuf},
     process::Command,
 };
-
-use eframe::egui::*;
-use egui_extras::*;
-use ex_core::Ex;
 
 #[derive(Default)]
 pub struct Rename {
@@ -22,6 +21,7 @@ pub struct Browser {
     pub ex: Ex,
     copied_file: PathBuf,
     renamed_file: Rename,
+    pub search: String,
 }
 
 impl Browser {
@@ -30,6 +30,7 @@ impl Browser {
             ex: Ex::new(),
             copied_file: PathBuf::new(),
             renamed_file: Rename::default(),
+            search: String::new(),
         }
     }
     pub fn set_path(mut self, path: &Path) -> Self {
@@ -43,9 +44,9 @@ impl Browser {
             .to_string_lossy()
             .to_string()
     }
-    pub fn ui(&mut self, ctx: &Context, search: &str) -> BrowserEvent {
+    pub fn ui(&mut self, ctx: &Context) -> BrowserEvent {
         let current_dir_string = self.ex.current_path_string();
-        let (response, event) = self.center(ctx, search);
+        let (response, event) = self.center(ctx);
         response.context_menu(|ui| {
             if ui.button("New File").clicked() {
                 ui.close_menu();
@@ -70,7 +71,7 @@ impl Browser {
 
         event
     }
-    fn center(&mut self, ctx: &Context, search: &str) -> (Response, BrowserEvent) {
+    fn center(&mut self, ctx: &Context) -> (Response, BrowserEvent) {
         let mut event = BrowserEvent::None;
         let response = CentralPanel::default()
             .show(ctx, |ui| {
@@ -87,7 +88,7 @@ impl Browser {
                             .unwrap_or(file.as_os_str())
                             .to_string_lossy()
                             .to_ascii_lowercase();
-                        file_name.contains(search)
+                        file_name.contains(&self.search)
                     })
                     .collect();
 
