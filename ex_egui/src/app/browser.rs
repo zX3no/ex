@@ -43,22 +43,25 @@ impl Browser {
             .to_string_lossy()
             .to_string()
     }
-    pub fn ui(&mut self, ctx: &Context) -> BrowserEvent {
-        let cd = self.ex.current_path_string();
-        let (response, event) = self.center(ctx);
+    pub fn ui(&mut self, ctx: &Context, search: &str) -> BrowserEvent {
+        let current_dir_string = self.ex.current_path_string();
+        let (response, event) = self.center(ctx, search);
         response.context_menu(|ui| {
             if ui.button("New File").clicked() {
                 ui.close_menu();
             };
 
             if ui.button("Open in Terminal").clicked() {
-                Command::new("wt.exe").args(&["-d", &cd]).output().unwrap();
+                Command::new("wt.exe")
+                    .args(&["-d", &current_dir_string])
+                    .output()
+                    .unwrap();
                 ui.close_menu();
             };
 
             if ui.button("Open in VSCode").clicked() {
                 Command::new("cmd")
-                    .args(&["/c", "code", &cd])
+                    .args(&["/c", "code", &current_dir_string])
                     .output()
                     .unwrap();
                 ui.close_menu();
@@ -67,14 +70,27 @@ impl Browser {
 
         event
     }
-    fn center(&mut self, ctx: &Context) -> (Response, BrowserEvent) {
+    fn center(&mut self, ctx: &Context, search: &str) -> (Response, BrowserEvent) {
         let mut event = BrowserEvent::None;
         let response = CentralPanel::default()
             .show(ctx, |ui| {
                 //Header
                 //TODO: only show the first 5 paths
                 let current_dir = self.ex.current_path_string();
+
                 let files = self.ex.get_files().to_owned();
+                let files: Vec<PathBuf> = files
+                    .into_iter()
+                    .filter(|file| {
+                        let file_name = file
+                            .file_name()
+                            .unwrap_or(file.as_os_str())
+                            .to_string_lossy()
+                            .to_ascii_lowercase();
+                        file_name.contains(search)
+                    })
+                    .collect();
+
                 let splits: Vec<&str> = current_dir
                     .split('\\')
                     .filter(|str| !str.is_empty())

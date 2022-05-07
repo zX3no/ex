@@ -5,6 +5,7 @@ use std::path::Path;
 pub struct Tabs {
     browsers: Vec<Browser>,
     index: usize,
+    search: String,
 }
 
 impl Tabs {
@@ -12,6 +13,7 @@ impl Tabs {
         Self {
             browsers: vec![Browser::new()],
             index: 0,
+            search: String::new(),
         }
     }
     pub fn add(&mut self, path: &Path) {
@@ -29,7 +31,7 @@ impl Tabs {
         }
     }
     pub fn ui(&mut self, ctx: &Context) {
-        match self.browsers[self.index].ui(ctx) {
+        match self.browsers[self.index].ui(ctx, &self.search) {
             BrowserEvent::Add(path) => self.add(&path),
             BrowserEvent::None => (),
         };
@@ -70,8 +72,9 @@ impl Tabs {
                     self.add_new();
                 };
 
-                // let mut text = String::new();
-                // ui.text_edit_singleline(&mut text);
+                ui.with_layout(Layout::right_to_left(), |ui| {
+                    ui.add(TextEdit::singleline(&mut self.search));
+                });
             });
         });
     }
