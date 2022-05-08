@@ -10,6 +10,9 @@ use std::{
 #[derive(Default)]
 pub struct Ex {
     files: Vec<PathBuf>,
+    current: PathBuf,
+    history: Vec<PathBuf>,
+    history_index: usize,
 }
 
 impl Ex {
@@ -19,23 +22,40 @@ impl Ex {
         s
     }
 
+    pub fn previous(&mut self) {
+        self.history_index = self.history_index.checked_sub(1).unwrap_or_default();
+        if let Some(path) = self.history.get(self.history_index).cloned() {
+            self.set_directory_no_history(&path);
+        }
+    }
+
+    pub fn next(&mut self) {
+        self.history_index = self
+            .history_index
+            .checked_add(1)
+            .unwrap_or(self.history.len());
+        if let Some(path) = self.history.get(self.history_index).cloned() {
+            self.set_directory_no_history(&path);
+        }
+    }
+
     pub fn current_path(&self) -> &Path {
-        &self.files[0]
+        &self.current
     }
 
     pub fn current_path_string(&self) -> String {
-        self.files[0].to_string_lossy().to_string()
+        self.current.to_string_lossy().to_string()
     }
 
     pub fn current_file(&self) -> String {
-        self.files[0]
+        self.current
             .file_name()
-            .unwrap_or_else(|| self.files[0].as_os_str())
+            .unwrap_or(self.current.as_os_str())
             .to_string_lossy()
             .to_string()
     }
 
-    pub fn set_directory(&mut self, path: &Path) {
+    fn set_directory_no_history(&mut self, path: &Path) {
         if env::set_current_dir(path).is_ok() {
             let mut files: Vec<PathBuf> = WalkDir::new(&path)
                 .max_depth(1)
@@ -44,6 +64,8 @@ impl Ex {
                 .flatten()
                 .map(|dir| dir.path())
                 .collect();
+
+            self.current = files.remove(0);
 
             files.sort_by_key(|a| {
                 !a.file_name()
@@ -58,10 +80,22 @@ impl Ex {
         };
     }
 
+    pub fn set_directory(&mut self, path: &Path) {
+        self.set_directory_no_history(path);
+
+        //start from 0 not 1
+        if !self.history.is_empty() {
+            self.history_index += 1;
+        }
+
+        self.history.push(path.to_path_buf());
+    }
+
     pub fn previous_dir(&mut self) {
         if let Some(path) = self.files.first().cloned() {
             if let Some(parent) = path.parent() {
                 self.set_directory(parent);
+                self.history.push(parent.to_path_buf());
             }
         }
     }

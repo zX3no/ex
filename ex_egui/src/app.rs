@@ -20,6 +20,8 @@ impl eframe::App for App {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         let Self { tabs } = self;
 
+        tabs.side_buttons(ctx);
+
         tabs.header(ctx);
 
         tabs.quick_access(ctx);

@@ -108,4 +108,13 @@ impl Tabs {
                 });
         });
     }
+
+    pub fn side_buttons(&mut self, ctx: &Context) {
+        if ctx.input().pointer.button_clicked(PointerButton::Back) {
+            self.browsers[self.index].previous();
+        }
+        if ctx.input().pointer.button_clicked(PointerButton::Forward) {
+            self.browsers[self.index].next();
+        }
+    }
 }

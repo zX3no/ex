@@ -39,11 +39,12 @@ impl Browser {
         self
     }
     pub fn title(&self) -> String {
-        self.ex.get_files()[0]
-            .file_name()
-            .unwrap_or_else(|| self.ex.get_files()[0].as_os_str())
-            .to_string_lossy()
-            .to_string()
+        let file = self.ex.current_file();
+        if file.contains(':') {
+            format!("Drive ({})", file)
+        } else {
+            file
+        }
     }
     pub fn ui(&mut self, ctx: &Context) -> BrowserEvent {
         let current_dir_string = self.ex.current_path_string();
@@ -84,12 +85,16 @@ impl Browser {
                 let files: Vec<PathBuf> = files
                     .into_iter()
                     .filter(|file| {
-                        let file_name = file
-                            .file_name()
-                            .unwrap_or(file.as_os_str())
-                            .to_string_lossy()
-                            .to_ascii_lowercase();
-                        file_name.contains(&self.search)
+                        if self.search.is_empty() {
+                            true
+                        } else {
+                            let file_name = file
+                                .file_name()
+                                .unwrap_or(file.as_os_str())
+                                .to_string_lossy()
+                                .to_ascii_lowercase();
+                            file_name.contains(&self.search)
+                        }
                     })
                     .collect();
 
@@ -298,5 +303,13 @@ impl Browser {
             }
         }
         true
+    }
+
+    pub fn previous(&mut self) {
+        self.ex.previous();
+    }
+
+    pub fn next(&mut self) {
+        self.ex.next();
     }
 }
