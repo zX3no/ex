@@ -11,8 +11,6 @@ use std::{
 pub struct Ex {
     files: Vec<PathBuf>,
     current: PathBuf,
-    history: Vec<PathBuf>,
-    history_index: usize,
 }
 
 impl Ex {
@@ -23,20 +21,12 @@ impl Ex {
     }
 
     pub fn previous(&mut self) {
-        self.history_index = self.history_index.checked_sub(1).unwrap_or_default();
-        if let Some(path) = self.history.get(self.history_index).cloned() {
-            self.set_directory_no_history(&path);
-        }
-    }
-
-    pub fn next(&mut self) {
-        self.history_index = self
-            .history_index
-            .checked_add(1)
-            .unwrap_or(self.history.len());
-        if let Some(path) = self.history.get(self.history_index).cloned() {
-            self.set_directory_no_history(&path);
-        }
+        let path = if let Some(parent) = self.current.parent() {
+            parent.to_path_buf()
+        } else {
+            return;
+        };
+        self.set_directory(&path);
     }
 
     pub fn current_path(&self) -> &Path {
@@ -55,7 +45,7 @@ impl Ex {
             .to_string()
     }
 
-    fn set_directory_no_history(&mut self, path: &Path) {
+    pub fn set_directory(&mut self, path: &Path) {
         if env::set_current_dir(path).is_ok() {
             let mut files: Vec<PathBuf> = WalkDir::new(&path)
                 .max_depth(1)
@@ -78,26 +68,6 @@ impl Ex {
 
             self.files = files;
         };
-    }
-
-    pub fn set_directory(&mut self, path: &Path) {
-        self.set_directory_no_history(path);
-
-        //start from 0 not 1
-        if !self.history.is_empty() {
-            self.history_index += 1;
-        }
-
-        self.history.push(path.to_path_buf());
-    }
-
-    pub fn previous_dir(&mut self) {
-        if let Some(path) = self.files.first().cloned() {
-            if let Some(parent) = path.parent() {
-                self.set_directory(parent);
-                self.history.push(parent.to_path_buf());
-            }
-        }
     }
 
     pub fn get_files(&self) -> &[PathBuf] {
