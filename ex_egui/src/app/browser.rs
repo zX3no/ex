@@ -310,6 +310,6 @@ impl Browser {
     }
 
     pub fn next(&mut self) {
-        self.ex.next();
+        // self.ex.next();
     }
 }
