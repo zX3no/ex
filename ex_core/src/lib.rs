@@ -52,6 +52,8 @@ impl Ex {
                 .skip_hidden(false)
                 .into_iter()
                 .flatten()
+                //Don't index files that can't be modified
+                .filter(|dir| dir.metadata().is_ok())
                 .map(|dir| dir.path())
                 .collect();
 

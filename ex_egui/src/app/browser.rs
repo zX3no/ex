@@ -277,29 +277,33 @@ impl Browser {
                 TextQuery::NewFile(text, path) => (text, path),
                 TextQuery::Rename(text, path) => (text, path),
             };
-            if file != path {
-                return false;
-            }
-            let pressed_enter = ui.input().key_pressed(Key::Enter);
-            let text_edit = ui.text_edit_singleline(text);
 
-            if self.refocus {
-                text_edit.request_focus();
-                self.refocus = false;
-            }
+            if file == path {
+                let text_edit = ui.text_edit_singleline(text);
 
-            if text_edit.lost_focus() || pressed_enter {
-                dbg!("renamed!");
-                // self.ex
-                //     .rename(
-                //         &self.renamed_file.name,
-                //         &self.renamed_file.path,
-                //     )
-                //     .unwrap();
+                if self.refocus {
+                    text_edit.request_focus();
+                    self.refocus = false;
+                }
 
-                //reset
-                self.text_query = None;
-                self.refocus = true;
+                if text_edit.lost_focus()
+                    || ui.input().key_pressed(Key::Enter)
+                    || text_edit.clicked_elsewhere()
+                {
+                    dbg!("renamed!");
+                    // self.ex
+                    //     .rename(
+                    //         &self.renamed_file.name,
+                    //         &self.renamed_file.path,
+                    //     )
+                    //     .unwrap();
+
+                    //reset
+                    self.text_query = None;
+                    self.refocus = true;
+
+                    return false;
+                }
             }
         }
         true
@@ -310,6 +314,7 @@ impl Browser {
     }
 
     pub fn next(&mut self) {
+        //TODO: keep history of paths visited
         // self.ex.next();
     }
 }
