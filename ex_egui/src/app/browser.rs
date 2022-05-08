@@ -51,6 +51,7 @@ impl Browser {
         let (response, event) = self.center(ctx);
         response.context_menu(|ui| {
             if ui.button("New File").clicked() {
+                self.text_query = Some(TextQuery::NewFile(String::new(), PathBuf::default()));
                 ui.close_menu();
             };
 
@@ -168,6 +169,7 @@ impl Browser {
 
                                     row.col(|ui| {
                                         if self.text_query(ui, &file) {
+                                            //is_file() can fail on fails that have bad permissions.
                                             let button = if file.is_file() {
                                                 ui.add(
                                                     Button::new(&format!("🖹  {}", name))

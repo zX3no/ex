@@ -47,17 +47,17 @@ impl Ex {
 
     pub fn set_directory(&mut self, path: &Path) {
         if env::set_current_dir(path).is_ok() {
-            let mut files: Vec<PathBuf> = WalkDir::new(&path)
+            let mut files: Vec<_> = WalkDir::new(&path)
                 .max_depth(1)
                 .skip_hidden(false)
                 .into_iter()
                 .flatten()
-                //Don't index files that can't be modified
-                .filter(|dir| dir.metadata().is_ok())
+                //Hide ntfs related files
+                .filter(|dir| dir.depth == 1 && dir.metadata().is_ok())
                 .map(|dir| dir.path())
                 .collect();
 
-            self.current = files.remove(0);
+            self.current = path.to_path_buf();
 
             files.sort_by_key(|a| {
                 !a.file_name()
