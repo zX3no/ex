@@ -72,6 +72,11 @@ impl Tabs {
 
                 ui.with_layout(Layout::right_to_left(), |ui| {
                     let search = &mut self.browsers[self.index].search;
+
+                    //change box color
+                    let visuals = &mut ui.style_mut().visuals;
+                    visuals.extreme_bg_color = visuals.window_fill();
+
                     ui.add(TextEdit::singleline(search).desired_width(150.0));
                 });
             });

@@ -41,6 +41,7 @@ impl Browser {
     pub fn title(&self) -> String {
         let file = self.ex.current_file();
         if file.contains(':') {
+            let file = file.as_str().replace(":\\", ":");
             format!("Drive ({})", file)
         } else {
             file
@@ -142,8 +143,8 @@ impl Browser {
                         .striped(true)
                         .resizable(true)
                         .column(Size::relative(0.45))
-                        .column(Size::relative(0.20))
-                        .column(Size::relative(0.20))
+                        .column(Size::relative(0.25))
+                        .column(Size::relative(0.15))
                         .column(Size::relative(0.15))
                         .header(20.0, |mut header| {
                             header.col(|ui| {
