@@ -41,6 +41,7 @@ impl App {
             ),
         ]
         .into();
+
         //(8.0, 3.0) default
         style.spacing.item_spacing = Vec2::new(6.0, 4.0);
         //8.0 default

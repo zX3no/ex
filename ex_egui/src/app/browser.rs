@@ -232,29 +232,27 @@ impl Browser {
                                 });
 
                                 row.col(|ui| {
-                                    if let Some(ex) = file.extension() {
+                                    if file.is_dir() {
+                                        ui.button("File folder");
+                                    } else if let Some(ex) = file.extension() {
                                         let ex = ex.to_string_lossy().to_string();
                                         let unknown = format!(".{ex} file");
                                         let file_type = match ex.as_str() {
                                             "lnk" => "Shortcut",
                                             "zip" => "zip Archive",
                                             "exe" => "Application",
-                                            _ => unknown.as_str(),
+                                            _ => &unknown,
                                         };
                                         ui.button(file_type);
                                     } else if let Some(file_name) = file.file_name() {
                                         let file_name = file_name.to_string_lossy().to_string();
-                                        if file.is_dir() {
-                                            ui.button("File folder");
-                                        } else if file_name.starts_with('.') {
+                                        if file_name.starts_with('.') {
                                             let file_type = match file_name.as_str() {
                                                 ".gitignore" => "Git Ignore",
                                                 ".gitconfig" => "Git Config",
                                                 _ => "Unknown dot file",
                                             };
                                             ui.button(file_type);
-                                        } else {
-                                            ui.button("File folder");
                                         }
                                     }
                                 });
