@@ -6,32 +6,35 @@ use std::{
     process::Command,
 };
 
-pub enum BrowserEvent {
-    Add(PathBuf),
-    None,
-}
-
-pub enum TextQuery {
+pub enum Event {
     NewFile(String, PathBuf),
     Rename(String, PathBuf),
+    Delete(PathBuf),
+}
+
+pub enum Buffer {
+    Copy(PathBuf),
+    Cut(PathBuf),
 }
 
 pub struct Browser {
     pub ex: Ex,
-    copied_file: PathBuf,
     pub search: String,
-    pub text_query: Option<TextQuery>,
+    event: Option<Event>,
+    buffer: Option<Buffer>,
     refocus: bool,
+    popup: bool,
 }
 
 impl Browser {
     pub fn new() -> Self {
         Self {
             ex: Ex::new(),
-            copied_file: PathBuf::new(),
             search: String::new(),
-            text_query: None,
+            event: None,
+            buffer: None,
             refocus: true,
+            popup: false,
         }
     }
     pub fn set_path(mut self, path: &Path) -> Self {
@@ -47,12 +50,47 @@ impl Browser {
             file
         }
     }
-    pub fn ui(&mut self, ctx: &Context) -> BrowserEvent {
-        let current_dir_string = self.ex.current_path_string();
+    pub fn paste(&mut self, ui: &mut Ui) {
+        if self.buffer.is_some() {
+            if ui.button("Paste").clicked() {
+                ui.close_menu();
+            };
+            ui.separator();
+        }
+    }
+    pub fn ui(&mut self, ctx: &Context) -> Option<PathBuf> {
+        if self.popup {
+            Window::new("Delete?")
+                .resizable(false)
+                .collapsible(false)
+                .show(ctx, |ui| {
+                    ui.horizontal(|ui| {
+                        if ui.button("Yes").clicked() {
+                            if let Some(Event::Delete(path)) = &self.event {
+                                eprintln!("Deleting path: {:?}", path);
+                                self.ex.delete(path).unwrap();
+
+                                //Update files.
+                                self.ex.refresh();
+                            };
+                            self.popup = false;
+                        };
+                        if ui.button("No").clicked() {
+                            self.popup = false;
+                        };
+                    });
+                });
+        }
+
         let (response, event) = self.center(ctx);
+        let current_dir_string = self.ex.current_path_string();
+
         response.context_menu(|ui| {
+            self.paste(ui);
+
             if ui.button("New File").clicked() {
-                self.text_query = Some(TextQuery::NewFile(String::new(), PathBuf::default()));
+                //TODO: new file
+                self.event = Some(Event::NewFile(String::new(), PathBuf::default()));
                 ui.close_menu();
             };
 
@@ -75,8 +113,10 @@ impl Browser {
 
         event
     }
-    fn center(&mut self, ctx: &Context) -> (Response, BrowserEvent) {
-        let mut event = BrowserEvent::None;
+    fn center(&mut self, ctx: &Context) -> (Response, Option<PathBuf>) {
+        //Check if the user wants a new tab.
+        let mut tab = None;
+
         let response = CentralPanel::default()
             .show(ctx, |ui| {
                 //Header
@@ -192,22 +232,25 @@ impl Browser {
                                                 }
                                             }
                                             if button.middle_clicked() && file.is_dir() {
-                                                event = BrowserEvent::Add(file.clone());
+                                                tab = Some(file.clone());
                                             }
                                             button.context_menu(|ui| {
-                                                if ui.button("Cut").clicked() {
+                                                if ui.button("Copy").clicked() {
+                                                    self.buffer = Some(Buffer::Copy(file.clone()));
                                                     ui.close_menu();
                                                 };
 
-                                                if ui.button("Copy").clicked() {
-                                                    self.copied_file = file.clone();
+                                                if ui.button("Cut").clicked() {
+                                                    self.buffer = Some(Buffer::Cut(file.clone()));
                                                     ui.close_menu();
                                                 };
 
                                                 ui.separator();
 
+                                                self.paste(ui);
+
                                                 if ui.button("Rename").clicked() {
-                                                    self.text_query = Some(TextQuery::Rename(
+                                                    self.event = Some(Event::Rename(
                                                         name.clone(),
                                                         file.clone(),
                                                     ));
@@ -217,7 +260,9 @@ impl Browser {
                                                 ui.separator();
 
                                                 if ui.button("Delete").clicked() {
-                                                    //TODO: confirmation box then delete
+                                                    self.popup = true;
+                                                    self.event = Some(Event::Delete(file.clone()));
+
                                                     ui.close_menu();
                                                 };
                                             });
@@ -270,13 +315,14 @@ impl Browser {
             })
             .response;
 
-        (response, event)
+        (response, tab)
     }
     fn text_query(&mut self, ui: &mut Ui, file: &PathBuf) -> bool {
-        if let Some(query) = &mut self.text_query {
-            let (text, path) = match query {
-                TextQuery::NewFile(text, path) => (text, path),
-                TextQuery::Rename(text, path) => (text, path),
+        if let Some(event) = &mut self.event {
+            let (text, path) = match event {
+                Event::NewFile(text, path) => (text, path),
+                Event::Rename(text, path) => (text, path),
+                _ => return true,
             };
 
             if file == path {
@@ -291,17 +337,13 @@ impl Browser {
                     || ui.input().key_pressed(Key::Enter)
                     || text_edit.clicked_elsewhere()
                 {
-                    dbg!("renamed!");
-                    // self.ex
-                    //     .rename(
-                    //         &self.renamed_file.name,
-                    //         &self.renamed_file.path,
-                    //     )
-                    //     .unwrap();
+                    eprintln!("Renaming {:?} to {}", path, text);
+                    self.ex.rename(text, path).unwrap();
 
                     //reset
-                    self.text_query = None;
+                    self.event = None;
                     self.refocus = true;
+                    self.ex.refresh();
 
                     return false;
                 }

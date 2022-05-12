@@ -1,4 +1,4 @@
-use super::browser::{Browser, BrowserEvent};
+use super::browser::Browser;
 use eframe::egui::*;
 use std::path::Path;
 
@@ -29,9 +29,8 @@ impl Tabs {
         }
     }
     pub fn body(&mut self, ctx: &Context) {
-        match self.browsers[self.index].ui(ctx) {
-            BrowserEvent::Add(path) => self.add(&path),
-            BrowserEvent::None => (),
+        if let Some(path) = self.browsers[self.index].ui(ctx) {
+            self.add(&path);
         };
     }
     pub fn set_directory(&mut self, path: &Path) {

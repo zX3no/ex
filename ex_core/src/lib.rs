@@ -72,6 +72,11 @@ impl Ex {
         };
     }
 
+    pub fn refresh(&mut self) {
+        let path = self.current.to_path_buf();
+        self.set_directory(&path);
+    }
+
     pub fn get_files(&self) -> &[PathBuf] {
         &self.files
     }
