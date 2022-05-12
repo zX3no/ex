@@ -65,6 +65,7 @@ impl Browser {
         }
     }
     pub fn ui(&mut self, ctx: &Context) -> Option<PathBuf> {
+        // Browser::test(&mut self.ex, self.popup);
         if self.popup {
             Window::new("Delete?")
                 .resizable(false)
@@ -209,13 +210,13 @@ impl Browser {
                         .body(|body| {
                             #[allow(unused)]
                             body.rows(20.0, files.len(), |i, mut row| {
-                                let file = files[i].clone();
+                                let file = files[i].as_path();
 
                                 if let Some(name) = file.file_name() {
                                     let name = name.to_string_lossy().to_string();
 
                                     row.col(|ui| {
-                                        if self.text_query(ui, &file) {
+                                        if self.text_query(ui, file) {
                                             //is_file() can fail on fails that have bad permissions.
                                             let button = if file.is_file() {
                                                 ui.add(
@@ -229,25 +230,27 @@ impl Browser {
                                                 )
                                             };
                                             if button.clicked() && file.is_dir() {
-                                                self.ex.set_directory(&file);
+                                                self.ex.set_directory(file);
                                             }
                                             if button.double_clicked() && !file.is_dir() {
-                                                if let Err(e) = self.ex.open(&file) {
+                                                if let Err(e) = self.ex.open(file) {
                                                     //TODO: print to error bar like Onivim
                                                     dbg!(e);
                                                 }
                                             }
                                             if button.middle_clicked() && file.is_dir() {
-                                                tab = Some(file.clone());
+                                                tab = Some(file.to_path_buf());
                                             }
                                             button.context_menu(|ui| {
                                                 if ui.button("Copy").clicked() {
-                                                    self.buffer = Some(Buffer::Copy(file.clone()));
+                                                    self.buffer =
+                                                        Some(Buffer::Copy(file.to_path_buf()));
                                                     ui.close_menu();
                                                 };
 
                                                 if ui.button("Cut").clicked() {
-                                                    self.buffer = Some(Buffer::Cut(file.clone()));
+                                                    self.buffer =
+                                                        Some(Buffer::Cut(file.to_path_buf()));
                                                     ui.close_menu();
                                                 };
 
@@ -258,7 +261,7 @@ impl Browser {
                                                 if ui.button("Rename").clicked() {
                                                     self.event = Some(Event::Rename(
                                                         name.clone(),
-                                                        file.clone(),
+                                                        file.to_path_buf(),
                                                     ));
                                                     ui.close_menu();
                                                 };
@@ -267,7 +270,8 @@ impl Browser {
 
                                                 if ui.button("Delete").clicked() {
                                                     self.popup = true;
-                                                    self.event = Some(Event::Delete(file.clone()));
+                                                    self.event =
+                                                        Some(Event::Delete(file.to_path_buf()));
 
                                                     ui.close_menu();
                                                 };
@@ -277,7 +281,7 @@ impl Browser {
                                 }
 
                                 row.col(|ui| {
-                                    if let Some(date) = Ex::last_modified(&file) {
+                                    if let Some(date) = Ex::last_modified(file) {
                                         ui.button(date);
                                     }
                                 });
@@ -309,7 +313,7 @@ impl Browser {
                                 });
 
                                 row.col(|ui| {
-                                    if let Some(size) = Ex::file_size(&file) {
+                                    if let Some(size) = Ex::file_size(file) {
                                         ui.button(size);
                                     }
                                 });
@@ -323,7 +327,7 @@ impl Browser {
 
         (response, tab)
     }
-    fn text_query(&mut self, ui: &mut Ui, file: &PathBuf) -> bool {
+    fn text_query(&mut self, ui: &mut Ui, file: &Path) -> bool {
         if let Some(event) = &mut self.event {
             let (text, path) = match event {
                 Event::NewFile(text, path) => (text, path),
