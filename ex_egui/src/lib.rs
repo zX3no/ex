@@ -142,6 +142,24 @@ impl Ex {
         trash::delete(file)
     }
 
+    pub fn copy(&self, from: &Path, to: &Path) {
+        if let Some(name) = from.file_name() {
+            let mut to = to.to_path_buf();
+            to.push(name);
+            eprintln!("Copying file from: {:?} to: {:?}", from, to);
+            fs::copy(from, to).unwrap();
+        }
+    }
+
+    pub fn cut(&self, from: &Path, to: &Path) {
+        if let Some(name) = from.file_name() {
+            let mut to = to.to_path_buf();
+            to.push(name);
+            eprintln!("Moving file from: {:?} to: {:?}", from, to);
+            fs::rename(from, to).unwrap();
+        }
+    }
+
     pub fn create_file(&self, path: &Path) -> io::Result<()> {
         fs::File::create(path)?;
         Ok(())

@@ -6,5 +6,8 @@ default-run = "ex"
 
 [dependencies]
 eframe = {path = "../../egui/eframe"}
-ex_core = { path = "../ex_core" }
 egui_extras = {path = "../../egui/egui_extras"}
+jwalk = "0.6.0"
+open = "2.1.2"
+trash = "2.1.0"
+chrono = "0.4.19"

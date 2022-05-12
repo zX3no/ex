@@ -1,6 +1,6 @@
 use eframe::egui::*;
 use egui_extras::*;
-use ex_core::Ex;
+use ex::Ex;
 use std::{
     path::{Path, PathBuf},
     process::Command,
@@ -53,6 +53,12 @@ impl Browser {
     pub fn paste(&mut self, ui: &mut Ui) {
         if self.buffer.is_some() {
             if ui.button("Paste").clicked() {
+                match &self.buffer {
+                    Some(Buffer::Copy(from)) => self.ex.copy(from, self.ex.current_path()),
+                    Some(Buffer::Cut(from)) => self.ex.cut(from, self.ex.current_path()),
+                    None => (),
+                }
+                self.ex.refresh();
                 ui.close_menu();
             };
             ui.separator();
