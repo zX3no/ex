@@ -33,9 +33,6 @@ impl Tabs {
             self.add(&path);
         };
     }
-    pub fn set_directory(&mut self, path: &Path) {
-        self.browsers[self.index].ex.set_directory(path);
-    }
     pub fn header(&mut self, ctx: &Context) {
         TopBottomPanel::top("top_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
@@ -89,7 +86,8 @@ impl Tabs {
                 let item = ui.button(label);
                 let path = Path::new(path);
                 if item.clicked() {
-                    self.set_directory(path);
+                    let browser = &mut self.browsers[self.index];
+                    browser.ex.set_directory(path, &browser.search);
                 }
                 if item.middle_clicked() {
                     self.add(path);
