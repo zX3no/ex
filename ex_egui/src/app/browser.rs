@@ -154,11 +154,11 @@ impl Browser {
                 if !files.is_empty() {
                     TableBuilder::new(ui)
                         .striped(true)
-                        .resizable(true)
-                        .column(Size::relative(0.45))
+                        .resizable(false)
+                        .column(Size::relative(0.50))
                         .column(Size::relative(0.25))
                         .column(Size::relative(0.15))
-                        .column(Size::relative(0.15))
+                        .column(Size::relative(0.10))
                         .header(20.0, |mut header| {
                             header.col(|ui| {
                                 ui.heading("Name");
@@ -259,13 +259,13 @@ impl Browser {
 
                                 row.col(|ui| {
                                     if let Some(date) = ex::last_modified(&file) {
-                                        ui.button(date);
+                                        ui.add(Button::new(date).wrap(false));
                                     }
                                 });
 
                                 row.col(|ui| {
                                     if file.is_dir() {
-                                        ui.button("File folder");
+                                        ui.add(Button::new("File folder").wrap(false));
                                     } else if let Some(ex) = file.extension() {
                                         let ex = ex.to_string_lossy().to_string();
                                         let unknown = format!(".{ex} file");
@@ -275,7 +275,7 @@ impl Browser {
                                             "exe" => "Application",
                                             _ => &unknown,
                                         };
-                                        ui.button(file_type);
+                                        ui.add(Button::new(file_type).wrap(false));
                                     } else if let Some(file_name) = file.file_name() {
                                         let file_name = file_name.to_string_lossy().to_string();
                                         if file_name.starts_with('.') {
@@ -284,14 +284,14 @@ impl Browser {
                                                 ".gitconfig" => "Git Config",
                                                 _ => "Unknown dot file",
                                             };
-                                            ui.button(file_type);
+                                            ui.add(Button::new(file_type).wrap(false));
                                         }
                                     }
                                 });
 
                                 row.col(|ui| {
                                     if let Some(size) = ex::file_size(&file) {
-                                        ui.button(size);
+                                        ui.add(Button::new(size).wrap(false));
                                     }
                                 });
                             });
