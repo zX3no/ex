@@ -69,11 +69,24 @@ impl Tabs {
                 ui.with_layout(Layout::right_to_left(), |ui| {
                     let search = &mut self.browsers[self.index].search;
 
-                    //change box color
+                    //TODO: highlight the borders
+
                     let visuals = &mut ui.style_mut().visuals;
                     visuals.extreme_bg_color = visuals.window_fill();
+                    visuals.widgets.inactive.bg_stroke = Stroke::new(2.0, Color32::DARK_GRAY);
 
-                    ui.add(TextEdit::singleline(search).desired_width(150.0));
+                    if ui
+                        .add(
+                            TextEdit::singleline(search)
+                                .desired_width(150.0)
+                                .lock_focus(true),
+                        )
+                        .changed()
+                    {
+                        let browser = &mut self.browsers[self.index];
+                        let path = browser.ex.current_path().to_path_buf();
+                        browser.ex.set_directory(&path, &browser.search);
+                    }
                 });
             });
         });
@@ -83,10 +96,12 @@ impl Tabs {
             let mut item = |ui: &mut Ui, label: &str, path: &str| {
                 let item = ui.button(label);
                 let path = Path::new(path);
+
                 if item.clicked() {
                     let browser = &mut self.browsers[self.index];
                     browser.ex.set_directory(path, &browser.search);
                 }
+
                 if item.middle_clicked() {
                     self.add(path);
                 }
@@ -113,6 +128,7 @@ impl Tabs {
         if ctx.input().pointer.button_clicked(PointerButton::Back) {
             self.browsers[self.index].previous();
         }
+
         if ctx.input().pointer.button_clicked(PointerButton::Forward) {
             self.browsers[self.index].next();
         }

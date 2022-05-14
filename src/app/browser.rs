@@ -161,7 +161,11 @@ impl Browser {
         let files = &self.ex.files;
 
         if files.is_empty() {
-            ui.centered_and_justified(|ui| ui.label("Folder is empty."));
+            if !self.search.is_empty() {
+                ui.centered_and_justified(|ui| ui.label("No results found."));
+            } else {
+                ui.centered_and_justified(|ui| ui.label("Folder is empty."));
+            }
             return;
         }
 
