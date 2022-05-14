@@ -124,17 +124,6 @@ pub fn last_modified(path: &Path) -> Option<String> {
     None
 }
 
-// 1601-01-01 is 11,644,473,600 seconds before Unix epoch.
-//https://github.com/oylenshpeegul/Epochs-rust/blob/master/src/lib.rs
-fn windows_date(x: i64) -> Option<NaiveDateTime> {
-    let d = 10_000_000;
-    let s = -11_644_473_600;
-    let q = x / d;
-    let n = ((x % d) * (1_000_000_000 / d)) as u32;
-    let t = q.checked_add(s)?;
-    NaiveDateTime::from_timestamp_opt(t, n)
-}
-
 pub fn open(path: &Path) -> Result<(), String> {
     match open::that(path) {
         Ok(_) => Ok(()),
@@ -178,4 +167,15 @@ pub fn create_file(path: &Path) -> io::Result<()> {
 
 pub fn create_dir(path: &Path) -> io::Result<()> {
     fs::create_dir(path)
+}
+
+// 1601-01-01 is 11,644,473,600 seconds before Unix epoch.
+//https://github.com/oylenshpeegul/Epochs-rust/blob/master/src/lib.rs
+fn windows_date(x: i64) -> Option<NaiveDateTime> {
+    let d = 10_000_000;
+    let s = -11_644_473_600;
+    let q = x / d;
+    let n = ((x % d) * (1_000_000_000 / d)) as u32;
+    let t = q.checked_add(s)?;
+    NaiveDateTime::from_timestamp_opt(t, n)
 }
