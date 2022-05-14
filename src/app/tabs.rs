@@ -80,8 +80,6 @@ impl Tabs {
     }
     pub fn quick_access(&mut self, ctx: &Context) {
         SidePanel::left("side_panel").show(ctx, |ui| {
-            ui.style_mut().visuals.button_frame = false;
-
             let mut item = |ui: &mut Ui, label: &str, path: &str| {
                 let item = ui.button(label);
                 let path = Path::new(path);

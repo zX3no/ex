@@ -165,10 +165,7 @@ impl Browser {
             return;
         }
 
-        //Button Styling
-        let style = ui.style_mut();
-        style.visuals.button_frame = false;
-        style.spacing.button_padding = Vec2::new(0.0, 0.0);
+        ui.style_mut().spacing.button_padding = Vec2::new(0.0, 0.5);
 
         TableBuilder::new(ui)
             .striped(true)

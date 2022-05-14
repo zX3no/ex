@@ -46,10 +46,10 @@ impl App {
         style.spacing.item_spacing = Vec2::new(6.0, 4.0);
         //8.0 default
         style.spacing.scroll_bar_width = 10.0;
-        //(4.0, 1.0) default
-        style.spacing.button_padding = Vec2::new(4.0, 2.0);
 
         style.visuals = Visuals::dark();
+
+        style.visuals.button_frame = false;
 
         ctx.set_style(style);
     }
