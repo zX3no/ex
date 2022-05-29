@@ -5,8 +5,8 @@ edition = "2021"
 default-run = "ex"
 
 [dependencies]
-eframe = {path = "../egui/eframe"}
-egui_extras = {path = "../egui/egui_extras"}
+eframe = {version  ="0.18.0", git = "https://github.com/emilk/egui"}
+egui_extras = {version = "0.18.0", git = "https://github.com/emilk/egui"}
 jwalk = "0.6.0"
 open = "2.1.2"
 trash = "2.1.2"
