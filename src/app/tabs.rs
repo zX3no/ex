@@ -66,7 +66,7 @@ impl Tabs {
                     self.add_new();
                 };
 
-                ui.with_layout(Layout::right_to_left(), |ui| {
+                ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
                     let search = &mut self.browsers[self.index].search;
 
                     //TODO: highlight the borders

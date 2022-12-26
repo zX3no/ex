@@ -54,7 +54,7 @@ impl Browser {
         let file = self.ex.current_file();
         if file.contains(':') {
             let file = file.as_str().replace(":\\", ":");
-            format!("Drive ({})", file)
+            format!("Drive ({file})")
         } else {
             file
         }
@@ -68,7 +68,7 @@ impl Browser {
                     ui.horizontal(|ui| {
                         if ui.button("Yes").clicked() {
                             if let Some(Event::Delete(path)) = &self.event {
-                                eprintln!("Deleting path: {:?}", path);
+                                eprintln!("Deleting path: {path:?}");
                                 ex::delete(path).unwrap();
                                 let path = self.ex.current_path().to_path_buf();
                                 self.ex.set_directory(&path, &self.search);
@@ -100,13 +100,13 @@ impl Browser {
             };
 
             if ui.button("Open in Terminal").clicked() {
-                Command::new("wt.exe").args(&["-d", &cd]).output().unwrap();
+                Command::new("wt.exe").args(["-d", &cd]).output().unwrap();
                 ui.close_menu();
             };
 
             if ui.button("Open in VSCode").clicked() {
                 Command::new("cmd")
-                    .args(&["/c", "code", &cd])
+                    .args(["/c", "code", &cd])
                     .output()
                     .unwrap();
                 ui.close_menu();
@@ -130,7 +130,7 @@ impl Browser {
             for (i, s) in splits.iter().enumerate() {
                 let label = if s.contains(':') {
                     //TODO: drive name
-                    format!("Drive ({})", s)
+                    format!("Drive ({s})")
                 } else {
                     s.to_string()
                 };
@@ -173,11 +173,10 @@ impl Browser {
 
         TableBuilder::new(ui)
             .striped(true)
-            .resizable(false)
-            .column(Size::relative(0.50))
-            .column(Size::relative(0.25))
-            .column(Size::relative(0.15))
-            .column(Size::relative(0.10))
+            .column(Column::auto())
+            .column(Column::auto())
+            .column(Column::auto())
+            .column(Column::auto())
             .header(20.0, |mut header| {
                 header.col(|ui| {
                     ui.heading("Name");
@@ -202,9 +201,9 @@ impl Browser {
                         row.col(|ui| {
                             //is_file() can fail on fails that have bad permissions.
                             let button = if file.is_file() {
-                                ui.add(Button::new(&format!("🖹  {}", name)).wrap(false))
+                                ui.add(Button::new(format!("🖹  {name}")).wrap(false))
                             } else {
-                                ui.add(Button::new(&format!("🗀  {}", name)).wrap(false))
+                                ui.add(Button::new(format!("🗀  {name}")).wrap(false))
                             };
 
                             if button.clicked() && file.is_dir() {

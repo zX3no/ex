@@ -50,7 +50,7 @@ impl Ex {
 
     pub fn set_directory(&mut self, path: &Path, search: &str) {
         if env::set_current_dir(path).is_ok() {
-            let mut files: Vec<_> = WalkDir::new(&path)
+            let mut files: Vec<_> = WalkDir::new(path)
                 .max_depth(1)
                 .skip_hidden(false)
                 .into_iter()
@@ -127,7 +127,7 @@ pub fn last_modified(path: &Path) -> Option<String> {
 pub fn open(path: &Path) -> Result<(), String> {
     match open::that(path) {
         Ok(_) => Ok(()),
-        Err(e) => Err(format!("{:?}", e)),
+        Err(e) => Err(format!("{e:?}")),
     }
 }
 
@@ -146,7 +146,7 @@ pub fn copy(from: &Path, to: &Path) {
     if let Some(name) = from.file_name() {
         let mut to = to.to_path_buf();
         to.push(name);
-        eprintln!("Copying file from: {:?} to: {:?}", from, to);
+        eprintln!("Copying file from: {from:?} to: {to:?}");
         fs::copy(from, to).unwrap();
     }
 }
@@ -155,7 +155,7 @@ pub fn cut(from: &Path, to: &Path) {
     if let Some(name) = from.file_name() {
         let mut to = to.to_path_buf();
         to.push(name);
-        eprintln!("Moving file from: {:?} to: {:?}", from, to);
+        eprintln!("Moving file from: {from:?} to: {to:?}");
         fs::rename(from, to).unwrap();
     }
 }
