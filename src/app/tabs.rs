@@ -125,11 +125,11 @@ impl Tabs {
     }
 
     pub fn side_buttons(&mut self, ctx: &Context) {
-        if ctx.input().pointer.button_clicked(PointerButton::Extra1) {
+        if ctx.input(|i| i.pointer.button_clicked(PointerButton::Extra1)) {
             self.browsers[self.index].previous();
         }
 
-        if ctx.input().pointer.button_clicked(PointerButton::Extra2) {
+        if ctx.input(|i| i.pointer.button_clicked(PointerButton::Extra2)) {
             self.browsers[self.index].next();
         }
     }

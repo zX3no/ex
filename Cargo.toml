@@ -5,9 +5,9 @@ edition = "2021"
 default-run = "ex"
 
 [dependencies]
-eframe = "*"
-egui_extras = "*"
+eframe = "0.21.3"
+egui_extras = "0.21.0"
 jwalk = "0.8.1"
-open = "3.2.0"
+open = "4.1.0"
 trash = "3.0.0"
 chrono = "0.4.19"
